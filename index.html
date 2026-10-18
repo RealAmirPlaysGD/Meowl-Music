@@ -134,6 +134,7 @@
   <img id="meowl-image" src="meowl.png" alt="Meowl">
   <audio id="meowl-audio" src="meowl.mp3.mp3" loop></audio>
   <audio id="meow-sound" src="meow.mp3" preload="auto"></audio>
+  <audio id="zesty-sound" src="meow-zesty.mp3" preload="auto"></audio>
   <audio id="admin-audio" src="meowlwow.mp3" loop preload="auto"></audio>
   <audio id="disco-audio" src="disco.mp3" preload="auto"></audio>
   <canvas id="floating-meowls" aria-hidden="true"></canvas>
@@ -151,6 +152,7 @@
     const audio = document.getElementById("meowl-audio");
     const image = document.getElementById("meowl-image");
     const meowSound = document.getElementById("meow-sound");
+    const zestySound = document.getElementById("zesty-sound");
     const adminAudio = document.getElementById("admin-audio");
     const discoAudio = document.getElementById("disco-audio");
     const banner = document.getElementById("status-banner");
@@ -220,8 +222,9 @@
 
     function triggerMeowReaction() {
       image.src = "meowl2.png";
-      meowSound.currentTime = 0;
-      meowSound.play();
+      const reactionSound = Math.random() < 0.05 ? zestySound : meowSound;
+      reactionSound.currentTime = 0;
+      reactionSound.play();
       clearTimeout(imageResetTimeout);
       imageResetTimeout = setTimeout(() => {
         image.src = "meowl.png";
