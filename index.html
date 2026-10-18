@@ -429,12 +429,12 @@
       jokeAudio.currentTime = 0;
       jokeAudio.play().catch(() => {});
       spawnJaronaMeowl();
-      jaronaSpawnTimer = setInterval(spawnJaronaMeowl, 1000);
+      jaronaSpawnTimer = setInterval(spawnJaronaMeowl, 500);
       jaronaEndTimer = setTimeout(() => {
         clearInterval(jaronaSpawnTimer);
         jaronaActive = false;
         showRandomMessage();
-      }, 20000);
+      }, 120000);
     }
     function addFloatingMeowl(options = {}) {
       const size = options.size ?? 55 + Math.random() * 95;
