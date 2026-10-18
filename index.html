@@ -1,18 +1,516 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Meowl</title>
   <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-    body { background: #000; }
-    img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #meowl-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #status-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 5;
+      box-sizing: border-box;
+      width: 100%;
+      font-size: 24px;
+      color: red;
+      font-weight: bold;
+      padding: 20px;
+      text-align: center;
+      background: yellow;
+    }
+
+    #admin-toggle {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 8;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 50%;
+      color: white;
+      background: rgba(0, 0, 0, 0.45);
+      font-size: 18px;
+      cursor: pointer;
+      opacity: 0.35;
+    }
+
+    #admin-toggle:hover,
+    #admin-toggle:focus-visible {
+      opacity: 1;
+    }
+
+    #admin-panel {
+      position: fixed;
+      right: 12px;
+      bottom: 54px;
+      z-index: 8;
+      width: min(260px, calc(100vw - 24px));
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #777;
+      border-radius: 10px;
+      color: white;
+      background: rgba(20, 20, 20, 0.95);
+      font: 14px sans-serif;
+    }
+
+    #admin-panel[hidden] {
+      display: none;
+    }
+
+    #admin-panel h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    #admin-panel button[data-event] {
+      display: block;
+      width: 100%;
+      margin-top: 7px;
+      padding: 8px;
+      border: 0;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .event-warning {
+      margin: 10px 2px 0;
+      color: #ffd66b;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    #meowl-image.disco-mode {
+      animation: meowl-disco 2s linear infinite;
+    }
+
+    #floating-meowls.disco-mode {
+      animation: meowl-rainbow 2s linear infinite;
+      will-change: filter;
+    }
+
+    @keyframes meowl-disco {
+      to { filter: hue-rotate(360deg); }
+    }
+
+    @keyframes meowl-rainbow {
+      to { filter: hue-rotate(360deg); }
+    }
+
+    #floating-meowls {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      overflow: hidden;
+      pointer-events: none;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+
   </style>
 </head>
 <body>
-  <img src="meowl.png" alt="Meowl">
-  <audio src="meowl.mp3.mp3" autoplay loop></audio>
+  <div id="status-banner">free music wow</div>
+  <img id="meowl-image" src="meowl.png" alt="Meowl">
+  <audio id="meowl-audio" src="meowl.mp3.mp3" loop></audio>
+  <audio id="meow-sound" src="meow.mp3" preload="auto"></audio>
+  <audio id="admin-audio" src="meowlwow.mp3" loop preload="auto"></audio>
+  <audio id="disco-audio" src="disco.mp3" preload="auto"></audio>
+  <canvas id="floating-meowls" aria-hidden="true"></canvas>
+  <button id="admin-toggle" type="button" aria-label="Open secret event panel" aria-expanded="false" title="">⚙</button>
+  <section id="admin-panel" aria-label="Secret event panel" hidden>
+    <h2>Meowl event panel</h2>
+    <button type="button" data-event="countdown">Start admin countdown</button>
+    <button type="button" data-event="admin-now">Start admin event now</button>
+    <button type="button" data-event="meow">Play meow reaction</button>
+    <button type="button" data-event="disco">Disco meowl (4 minutes 7 seconds)</button>
+    <button type="button" data-event="disco-countdown">Start disco countdown</button>
+    <p class="event-warning">Warning: Disco mode has no image limit and may slow down your browser.</p>
+  </section>
+  <script>
+    const audio = document.getElementById("meowl-audio");
+    const image = document.getElementById("meowl-image");
+    const meowSound = document.getElementById("meow-sound");
+    const adminAudio = document.getElementById("admin-audio");
+    const discoAudio = document.getElementById("disco-audio");
+    const banner = document.getElementById("status-banner");
+    const floatingMeowls = document.getElementById("floating-meowls");
+    const floatingContext = floatingMeowls.getContext("2d", { alpha: true });
+    const floatingSprite = new Image();
+    floatingSprite.src = "disco meowl.png";
+    const adminToggle = document.getElementById("admin-toggle");
+    const adminPanel = document.getElementById("admin-panel");
+    const rotatingMessages = [
+      "free music meowl",
+      "free musics",
+      "free meowl music",
+      "＼(＾▽＾)／",
+      "yay",
+      "lala",
+      "lLALALALLALALAL",
+      "lalalalalalll",
+      "allalalallalal",
+      "music by meowl made with love by meowl",
+      "we love meowls yay",
+      "we love meowls"
+    ];
+    const maxFloatingMeowls = 20;
+    const discoCopiesPerCollision = 60;
+    const discoBatchCooldown = 300;
+    let imageResetTimeout;
+    let textTimer;
+    let countdownTimer;
+    let effectTimer;
+    let spawnTimer;
+    let countdownActive = false;
+    let discoCountdownActive = false;
+    let adminEventActive = false;
+    let adminAudioWasPlaying = false;
+    let discoActive = false;
+    let discoTimer;
+    let discoRainbowDelay = "0ms";
+    let lastMessage = "free music wow";
+    let floatingMeowlMotion = [];
+    let activeCollisionPairs = new Set();
+    let lastCollisionBurstAt = -Infinity;
+    let lastCollisionCheckAt = -Infinity;
+    let animationFrameId;
+    let lastAnimationFrame = 0;
+
+    function resizeFloatingCanvas() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+      floatingMeowls.width = Math.round(window.innerWidth * ratio);
+      floatingMeowls.height = Math.round(window.innerHeight * ratio);
+      floatingContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    resizeFloatingCanvas();
+    window.addEventListener("resize", resizeFloatingCanvas);
+
+    image.addEventListener("click", () => {
+      if (adminEventActive) return;
+
+      if (audio.paused) {
+        audio.play();
+        return;
+      }
+
+      triggerMeowReaction();
+    });
+
+    function triggerMeowReaction() {
+      image.src = "meowl2.png";
+      meowSound.currentTime = 0;
+      meowSound.play();
+      clearTimeout(imageResetTimeout);
+      imageResetTimeout = setTimeout(() => {
+        image.src = "meowl.png";
+      }, 300);
+    }
+
+    function canStartEvent() {
+      return !countdownActive && !discoCountdownActive && !adminEventActive && !discoActive;
+    }
+
+    function startDiscoEvent() {
+      if (!canStartEvent()) return;
+      discoActive = true;
+      discoAudio.currentTime = 0;
+      discoAudio.play();
+      discoRainbowDelay = `${-(performance.now() % 2000)}ms`;
+      image.classList.add("disco-mode");
+      image.style.animationDelay = discoRainbowDelay;
+      floatingMeowls.classList.add("disco-mode");
+      floatingMeowls.style.animationDelay = discoRainbowDelay;
+      banner.innerText = "meowl disco mode!";
+      floatingContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      floatingMeowlMotion = [];
+      activeCollisionPairs.clear();
+      lastCollisionBurstAt = -Infinity;
+      lastCollisionCheckAt = -Infinity;
+      for (let i = 0; i < 2; i += 1) addFloatingMeowl();
+      lastAnimationFrame = 0;
+      animationFrameId = requestAnimationFrame(moveFloatingMeowls);
+      discoTimer = setTimeout(() => {
+        image.classList.remove("disco-mode");
+        image.style.removeProperty("animation-delay");
+        floatingMeowls.classList.remove("disco-mode");
+        floatingMeowls.style.removeProperty("animation-delay");
+        discoActive = false;
+        cancelAnimationFrame(animationFrameId);
+        floatingMeowlMotion = [];
+        activeCollisionPairs.clear();
+        floatingContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        showRandomMessage();
+      }, 247000);
+    }
+
+    adminToggle.addEventListener("click", () => {
+      adminPanel.hidden = !adminPanel.hidden;
+      adminToggle.setAttribute("aria-expanded", String(!adminPanel.hidden));
+    });
+
+    adminPanel.addEventListener("click", (event) => {
+      const eventButton = event.target.closest("[data-event]");
+      if (!eventButton) return;
+
+      if (eventButton.dataset.event === "meow") {
+        triggerMeowReaction();
+      } else if (eventButton.dataset.event === "disco") {
+        startDiscoEvent();
+      } else if (eventButton.dataset.event === "countdown" && canStartEvent()) {
+        beginAdminCountdown();
+      } else if (eventButton.dataset.event === "disco-countdown" && canStartEvent()) {
+        beginDiscoCountdown();
+      } else if (eventButton.dataset.event === "admin-now" && canStartEvent()) {
+        startAdminEvent();
+      }
+
+      adminPanel.hidden = true;
+      adminToggle.setAttribute("aria-expanded", "false");
+    });
+
+    function showRandomMessage() {
+      let message;
+      do {
+        message = rotatingMessages[Math.floor(Math.random() * rotatingMessages.length)];
+      } while (message === lastMessage);
+
+      lastMessage = message;
+      banner.innerText = message;
+    }
+
+    function beginAdminCountdown() {
+      countdownActive = true;
+      const countdownEndsAt = Date.now() + 60000;
+
+      function updateCountdown() {
+        const secondsLeft = Math.ceil((countdownEndsAt - Date.now()) / 1000);
+        if (secondsLeft <= 0) {
+          startAdminEvent();
+          return;
+        }
+
+        banner.innerText = secondsLeft === 60
+          ? "meowl admin abuse in 1 minute"
+          : `meowl admin abuse in ${secondsLeft} seconds`;
+        countdownTimer = setTimeout(updateCountdown, 1000);
+      }
+
+      updateCountdown();
+    }
+
+    function beginDiscoCountdown() {
+      discoCountdownActive = true;
+      const countdownEndsAt = Date.now() + 60000;
+
+      function updateCountdown() {
+        const secondsLeft = Math.ceil((countdownEndsAt - Date.now()) / 1000);
+        if (secondsLeft <= 0) {
+          discoCountdownActive = false;
+          startDiscoEvent();
+          return;
+        }
+
+        banner.innerText = secondsLeft === 60
+          ? "disco in 1 minute"
+          : `disco in ${secondsLeft} seconds`;
+        countdownTimer = setTimeout(updateCountdown, 1000);
+      }
+
+      updateCountdown();
+    }
+
+    function addFloatingMeowl(options = {}) {
+      const size = options.size ?? 55 + Math.random() * 95;
+      const width = Math.round(size);
+      const height = Math.round(size * 850 / 770);
+      const maxX = Math.max(0, window.innerWidth - width);
+      const maxY = Math.max(0, window.innerHeight - height);
+      const x = Math.max(0, Math.min(options.x ?? Math.random() * maxX, maxX));
+      const y = Math.max(0, Math.min(options.y ?? Math.random() * maxY, maxY));
+      floatingMeowlMotion.push({
+        x,
+        y,
+        width,
+        height,
+        vx: (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 3),
+        vy: (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 3),
+        ...(options.velocity || {})
+      });
+    }
+
+    function moveFloatingMeowls(timestamp) {
+      const motionCount = floatingMeowlMotion.length;
+      const frameInterval = motionCount > 5000 ? 1000 / 15 : motionCount > 1000 ? 1000 / 30 : 0;
+      if (frameInterval && timestamp - lastAnimationFrame < frameInterval) {
+        animationFrameId = requestAnimationFrame(moveFloatingMeowls);
+        return;
+      }
+      const frameScale = lastAnimationFrame
+        ? Math.min((timestamp - lastAnimationFrame) / 16.67, 5)
+        : 1;
+      lastAnimationFrame = timestamp;
+
+      for (let i = 0; i < motionCount; i += 1) {
+        const meowl = floatingMeowlMotion[i];
+        const maxX = Math.max(0, window.innerWidth - meowl.width);
+        const maxY = Math.max(0, window.innerHeight - meowl.height);
+        meowl.x += meowl.vx * frameScale;
+        meowl.y += meowl.vy * frameScale;
+
+        if (meowl.x <= 0 || meowl.x >= maxX) {
+          meowl.x = Math.max(0, Math.min(meowl.x, maxX));
+          meowl.vx *= -1;
+        }
+        if (meowl.y <= 0 || meowl.y >= maxY) {
+          meowl.y = Math.max(0, Math.min(meowl.y, maxY));
+          meowl.vy *= -1;
+        }
+
+      }
+
+      floatingContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      if (floatingSprite.complete && floatingSprite.naturalWidth) {
+        for (const meowl of floatingMeowlMotion) {
+          floatingContext.drawImage(floatingSprite, meowl.x, meowl.y, meowl.width, meowl.height);
+        }
+      }
+
+      if (discoActive && timestamp - lastCollisionCheckAt >= 100) {
+        lastCollisionCheckAt = timestamp;
+        const collisionsThisFrame = new Set();
+        const countAtFrameStart = floatingMeowlMotion.length;
+        const cellSize = 256;
+        const grid = new Map();
+
+        for (let i = 0; i < countAtFrameStart; i += 1) {
+          const meowl = floatingMeowlMotion[i];
+          const cellX = Math.floor((meowl.x + meowl.width / 2) / cellSize);
+          const cellY = Math.floor((meowl.y + meowl.height / 2) / cellSize);
+          const key = `${cellX}:${cellY}`;
+          if (!grid.has(key)) grid.set(key, []);
+          grid.get(key).push(i);
+        }
+
+        for (let i = 0; i < countAtFrameStart; i += 1) {
+          const first = floatingMeowlMotion[i];
+          const cellX = Math.floor((first.x + first.width / 2) / cellSize);
+          const cellY = Math.floor((first.y + first.height / 2) / cellSize);
+          for (let neighborX = cellX - 1; neighborX <= cellX + 1; neighborX += 1) {
+            for (let neighborY = cellY - 1; neighborY <= cellY + 1; neighborY += 1) {
+              const neighbors = grid.get(`${neighborX}:${neighborY}`) || [];
+              for (const j of neighbors) {
+                if (j <= i) continue;
+                const second = floatingMeowlMotion[j];
+                const overlaps = Math.abs(first.x + first.width / 2 - second.x - second.width / 2)
+                    < (first.width + second.width) / 2
+                  && Math.abs(first.y + first.height / 2 - second.y - second.height / 2)
+                    < (first.height + second.height) / 2;
+                if (!overlaps) continue;
+
+                const pairKey = `${i}:${j}`;
+                collisionsThisFrame.add(pairKey);
+                if (activeCollisionPairs.has(pairKey)) continue;
+
+                const centerX = (first.x + first.width / 2 + second.x + second.width / 2) / 2;
+                const centerY = (first.y + first.height / 2 + second.y + second.height / 2) / 2;
+                if (timestamp - lastCollisionBurstAt < discoBatchCooldown) continue;
+                lastCollisionBurstAt = timestamp;
+                const parentSize = (first.width + second.width) / 2;
+                const firstCopyAngle = Math.random() * Math.PI * 2;
+                for (let copy = 0; copy < discoCopiesPerCollision; copy += 1) {
+                  const size = Math.max(24, Math.min(190, parentSize * (0.55 + Math.random() * 0.9)));
+                  const angle = firstCopyAngle + copy * Math.PI * 2 / discoCopiesPerCollision;
+                  const speed = 3 + Math.random() * 3;
+                  const burstRadius = parentSize * 0.75 + size * 0.75;
+                  addFloatingMeowl({
+                    x: centerX - size / 2 + Math.cos(angle) * burstRadius,
+                    y: centerY - size * 850 / 770 / 2 + Math.sin(angle) * burstRadius,
+                    size,
+                    velocity: {
+                      vx: Math.cos(angle) * speed,
+                      vy: Math.sin(angle) * speed
+                    }
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        activeCollisionPairs = collisionsThisFrame;
+      }
+
+      if (adminEventActive || discoActive) {
+        animationFrameId = requestAnimationFrame(moveFloatingMeowls);
+      }
+    }
+
+    function startAdminEvent() {
+      countdownActive = false;
+      adminEventActive = true;
+      adminAudioWasPlaying = !audio.paused;
+      audio.pause();
+      adminAudio.currentTime = 0;
+      adminAudio.play();
+      banner.innerText = "meowl admin abuse!";
+      lastAnimationFrame = 0;
+      animationFrameId = requestAnimationFrame(moveFloatingMeowls);
+
+      let floatingCount = 0;
+      function burst() {
+        for (let i = 0; i < 4 && floatingCount < maxFloatingMeowls; i += 1) {
+          addFloatingMeowl();
+          floatingCount += 1;
+        }
+        if (floatingCount >= maxFloatingMeowls) clearInterval(spawnTimer);
+      }
+
+      burst();
+      spawnTimer = setInterval(burst, 700);
+      effectTimer = setTimeout(endAdminEvent, 120000);
+    }
+
+    function endAdminEvent() {
+      clearInterval(spawnTimer);
+      cancelAnimationFrame(animationFrameId);
+      floatingMeowlMotion = [];
+      floatingContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      adminAudio.pause();
+      adminAudio.currentTime = 0;
+      adminEventActive = false;
+      showRandomMessage();
+      if (adminAudioWasPlaying) audio.play();
+    }
+
+    textTimer = setInterval(() => {
+      if (countdownActive || discoCountdownActive || adminEventActive || discoActive) return;
+      showRandomMessage();
+      const chance = Math.random();
+      if (chance < 0.01) beginAdminCountdown();
+      else if (chance < 0.02) beginDiscoCountdown();
+    }, 5000);
+  </script>
 </body>
 </html>
