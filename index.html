@@ -244,6 +244,7 @@
     let discoActive = false;
     let jaronaCountdownActive = false;
     let jaronaActive = false;
+    let pointerInsideWindow = true;
     let jaronaSpawnTimer;
     let jaronaEndTimer;
     let discoTimer;
@@ -266,8 +267,15 @@
     resizeFloatingCanvas();
     window.addEventListener("resize", resizeFloatingCanvas);
     document.addEventListener("pointermove", (event) => {
+      pointerInsideWindow = true;
       jaronaFlowery.style.left = event.clientX + "px";
       jaronaFlowery.style.top = event.clientY + "px";
+    });
+    document.addEventListener("pointerleave", () => {
+      pointerInsideWindow = false;
+      if (!jaronaActive) return;
+      jaronaFlowery.style.left = window.innerWidth / 2 + "px";
+      jaronaFlowery.style.top = "76px";
     });
 
     image.addEventListener("click", () => {
@@ -456,6 +464,10 @@
       jaronaActive = true;
       banner.innerText = "Jarona!";
       jaronaFlowery.hidden = false;
+      if (!pointerInsideWindow) {
+        jaronaFlowery.style.left = window.innerWidth / 2 + "px";
+        jaronaFlowery.style.top = "76px";
+      }
       document.body.classList.add("jarona-active");
       jokeAudio.currentTime = 0;
       jokeAudio.play().catch(() => {});
