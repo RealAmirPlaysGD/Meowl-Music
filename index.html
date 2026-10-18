@@ -429,7 +429,7 @@
       jokeAudio.currentTime = 0;
       jokeAudio.play().catch(() => {});
       spawnJaronaMeowl();
-      jaronaSpawnTimer = setInterval(spawnJaronaMeowl, 180);
+      jaronaSpawnTimer = setInterval(spawnJaronaMeowl, 1000);
       jaronaEndTimer = setTimeout(() => {
         clearInterval(jaronaSpawnTimer);
         jaronaActive = false;
