@@ -170,7 +170,7 @@
     <button type="button" data-event="countdown">Start admin countdown</button>
     <button type="button" data-event="admin-now">Start admin event now</button>
     <button type="button" data-event="meow">Play secret meow sound</button>
-    <button type="button" data-event="disco">Disco meowl (4 minutes 7 seconds)</button>
+    <button type="button" data-event="disco">Disco meowl (1 minute)</button>
     <button type="button" data-event="disco-countdown">Start disco countdown</button>
     <button type="button" data-event="jarona">Jarona!</button>
     <p class="event-warning">Warning: Disco mode has no image limit and may slow down your browser.</p>
@@ -207,7 +207,7 @@
       "we love meowls"
     ];
     const maxFloatingMeowls = 20;
-    const discoCopiesPerCollision = 60;
+    const discoCopiesPerCollision = 20;
     const discoBatchCooldown = 300;
     let imageResetTimeout;
     let textTimer;
@@ -299,7 +299,7 @@
         activeCollisionPairs.clear();
         floatingContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
         showRandomMessage();
-      }, 247000);
+      }, 60000);
     }
 
     adminToggle.addEventListener("click", () => {
