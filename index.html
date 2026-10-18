@@ -189,6 +189,7 @@
     <button type="button" data-event="disco">Disco meowl (1 minute)</button>
     <button type="button" data-event="disco-countdown">Start disco countdown</button>
     <button type="button" data-event="jarona">Jarona!</button>
+    <button type="button" data-event="jarona-countdown">Jarona! countdown</button>
     <p class="event-warning">Warning: Disco mode has no image limit and may slow down your browser.</p>
   </section>
   <script>
@@ -337,6 +338,8 @@
       } else if (eventButton.dataset.event === "disco-countdown" && canStartEvent()) {
         beginDiscoCountdown();
       } else if (eventButton.dataset.event === "jarona" && canStartEvent()) {
+        startJaronaEvent();
+      } else if (eventButton.dataset.event === "jarona-countdown" && canStartEvent()) {
         beginJaronaCountdown();
       } else if (eventButton.dataset.event === "admin-now" && canStartEvent()) {
         startAdminEvent();
