@@ -152,14 +152,19 @@
     }
     #jarona-flowery {
       position: fixed;
-      top: 76px;
-      left: 50%;
+      top: 0;
+      left: 0;
       z-index: 9;
       width: 120px;
       height: 120px;
       object-fit: contain;
-      transform: translateX(-50%);
+      transform: translate(-50%, -50%);
       pointer-events: none;
+    }
+
+    body.jarona-active,
+    body.jarona-active * {
+      cursor: none !important;
     }
 
     #jarona-flowery[hidden] {
@@ -260,6 +265,10 @@
 
     resizeFloatingCanvas();
     window.addEventListener("resize", resizeFloatingCanvas);
+    document.addEventListener("pointermove", (event) => {
+      jaronaFlowery.style.left = event.clientX + "px";
+      jaronaFlowery.style.top = event.clientY + "px";
+    });
 
     image.addEventListener("click", () => {
       if (adminEventActive) return;
@@ -447,6 +456,7 @@
       jaronaActive = true;
       banner.innerText = "Jarona!";
       jaronaFlowery.hidden = false;
+      document.body.classList.add("jarona-active");
       jokeAudio.currentTime = 0;
       jokeAudio.play().catch(() => {});
       spawnJaronaMeowl();
@@ -455,6 +465,7 @@
         clearInterval(jaronaSpawnTimer);
         jaronaActive = false;
         jaronaFlowery.hidden = true;
+        document.body.classList.remove("jarona-active");
         showRandomMessage();
       }, 120000);
     }
