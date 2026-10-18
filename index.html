@@ -150,6 +150,21 @@
       84% { opacity: 1; transform: translate(-50%, -50%) scale(5.5); }
       100% { opacity: 0; transform: translate(-50%, -50%) scale(6.5); }
     }
+    #jarona-flowery {
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      z-index: 9;
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    #jarona-flowery[hidden] {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -163,6 +178,7 @@
   <audio id="joke-audio" src="joke.mp3" preload="auto"></audio>
   <audio id="jarona-spawn-audio" src="meowl-Jarona.mp3" preload="auto"></audio>
   <div id="jarona-layer" aria-hidden="true"></div>
+  <img id="jarona-flowery" src="flowery.png" alt="" hidden>
   <canvas id="floating-meowls" aria-hidden="true"></canvas>
   <button id="admin-toggle" type="button" aria-label="Open secret event panel" aria-expanded="false" title="">⚙</button>
   <section id="admin-panel" aria-label="Secret event panel" hidden>
@@ -185,6 +201,7 @@
     const jokeAudio = document.getElementById("joke-audio");
     const jaronaSpawnAudio = document.getElementById("jarona-spawn-audio");
     const jaronaLayer = document.getElementById("jarona-layer");
+    const jaronaFlowery = document.getElementById("jarona-flowery");
     const banner = document.getElementById("status-banner");
     const floatingMeowls = document.getElementById("floating-meowls");
     const floatingContext = floatingMeowls.getContext("2d", { alpha: true });
@@ -426,6 +443,7 @@
       if (!canStartEvent()) return;
       jaronaActive = true;
       banner.innerText = "Jarona!";
+      jaronaFlowery.hidden = false;
       jokeAudio.currentTime = 0;
       jokeAudio.play().catch(() => {});
       spawnJaronaMeowl();
@@ -433,6 +451,7 @@
       jaronaEndTimer = setTimeout(() => {
         clearInterval(jaronaSpawnTimer);
         jaronaActive = false;
+        jaronaFlowery.hidden = true;
         showRandomMessage();
       }, 120000);
     }
