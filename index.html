@@ -35,6 +35,24 @@
       background: yellow;
     }
 
+    body.edit-mode {
+      outline: 4px solid #ff4fd8;
+      outline-offset: -4px;
+    }
+
+    body.edit-mode::after {
+      position: fixed;
+      top: 76px;
+      right: 12px;
+      z-index: 20;
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: white;
+      background: #b00075;
+      content: "EDIT MODE · click banner 5 times to exit";
+      font: bold 13px sans-serif;
+      pointer-events: none;
+    }
     #admin-toggle {
       position: fixed;
       right: 12px;
@@ -256,6 +274,8 @@
     let lastCollisionCheckAt = -Infinity;
     let animationFrameId;
     let lastAnimationFrame = 0;
+    let editMode = false;
+    let bannerClickCount = 0;
 
     function resizeFloatingCanvas() {
       const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -266,6 +286,15 @@
 
     resizeFloatingCanvas();
     window.addEventListener("resize", resizeFloatingCanvas);
+    banner.addEventListener("click", () => {
+      bannerClickCount += 1;
+      if (bannerClickCount < 5) return;
+      bannerClickCount = 0;
+      editMode = !editMode;
+      document.body.contentEditable = String(editMode);
+      document.body.spellcheck = editMode;
+      document.body.classList.toggle("edit-mode", editMode);
+    });
     document.addEventListener("pointermove", (event) => {
       pointerInsideWindow = true;
       jaronaFlowery.style.left = event.clientX + "px";
@@ -647,7 +676,7 @@
     }
 
     textTimer = setInterval(() => {
-      if (countdownActive || discoCountdownActive || jaronaCountdownActive || adminEventActive || discoActive || jaronaActive) return;
+      if (editMode || countdownActive || discoCountdownActive || jaronaCountdownActive || adminEventActive || discoActive || jaronaActive) return;
       showRandomMessage();
       const chance = Math.random();
       if (chance < 0.01) beginAdminCountdown();
