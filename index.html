@@ -329,6 +329,8 @@
         floatingMeowls.classList.remove("disco-mode");
         floatingMeowls.style.removeProperty("animation-delay");
         discoActive = false;
+        discoAudio.pause();
+        discoAudio.currentTime = 0;
         cancelAnimationFrame(animationFrameId);
         floatingMeowlMotion = [];
         activeCollisionPairs.clear();
