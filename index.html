@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Meowl</title>
+  <link rel="icon" type="image/png" href="icon.png">
   <script defer src="https://cloud.umami.is/script.js" data-website-id="a170e7cc-cf0a-484f-a5db-dd786746b95e"></script>
   <style>
     html,
@@ -511,7 +512,7 @@
       jokeAudio.currentTime = 0;
       jokeAudio.play().catch(() => {});
       spawnJaronaMeowl();
-      jaronaSpawnTimer = setInterval(spawnJaronaMeowl, 500);
+      jaronaSpawnTimer = setInterval(spawnJaronaMeowl, 600);
       jaronaEndTimer = setTimeout(() => {
         clearInterval(jaronaSpawnTimer);
         jaronaActive = false;
