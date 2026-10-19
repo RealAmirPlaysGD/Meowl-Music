@@ -53,6 +53,19 @@
       font: bold 13px sans-serif;
       pointer-events: none;
     }
+    #edit-exit-mode {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 30;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 8px;
+      color: white;
+      background: #b00075;
+      font: bold 14px sans-serif;
+      cursor: pointer;
+    }
     #admin-toggle {
       position: fixed;
       right: 12px;
@@ -203,6 +216,7 @@
   <div id="jarona-layer" aria-hidden="true"></div>
   <img id="jarona-flowery" src="flowery.png" alt="" hidden>
   <canvas id="floating-meowls" aria-hidden="true"></canvas>
+  <button id="edit-exit-mode" type="button" contenteditable="false" hidden>Exit edit mode</button>
   <button id="admin-toggle" type="button" aria-label="Open secret event panel" aria-expanded="false" title="">⚙</button>
   <section id="admin-panel" aria-label="Secret event panel" hidden>
     <h2>Meowl event panel</h2>
@@ -227,6 +241,7 @@
     const jaronaLayer = document.getElementById("jarona-layer");
     const jaronaFlowery = document.getElementById("jarona-flowery");
     const banner = document.getElementById("status-banner");
+    const editExitButton = document.getElementById("edit-exit-mode");
     const floatingMeowls = document.getElementById("floating-meowls");
     const floatingContext = floatingMeowls.getContext("2d", { alpha: true });
     const floatingSprite = new Image();
@@ -286,15 +301,20 @@
 
     resizeFloatingCanvas();
     window.addEventListener("resize", resizeFloatingCanvas);
-    banner.addEventListener("click", () => {
-      bannerClickCount += 1;
-      if (bannerClickCount < 5) return;
+    function setEditMode(enabled) {
+      editMode = enabled;
       bannerClickCount = 0;
-      editMode = !editMode;
       document.body.contentEditable = String(editMode);
       document.body.spellcheck = editMode;
       document.body.classList.toggle("edit-mode", editMode);
+      editExitButton.hidden = !editMode;
+    }
+    banner.addEventListener("click", () => {
+      bannerClickCount += 1;
+      if (bannerClickCount < 5) return;
+      setEditMode(!editMode);
     });
+    editExitButton.addEventListener("click", () => setEditMode(false));
     document.addEventListener("pointermove", (event) => {
       pointerInsideWindow = true;
       jaronaFlowery.style.left = event.clientX + "px";
