@@ -330,7 +330,7 @@
     }
 
     function canStartEvent() {
-      return !countdownActive && !discoCountdownActive && !jaronaCountdownActive && !adminEventActive && !discoActive && !jaronaActive;
+      return !editMode && !countdownActive && !discoCountdownActive && !jaronaCountdownActive && !adminEventActive && !discoActive && !jaronaActive;
     }
 
     function startDiscoEvent() {
@@ -640,6 +640,7 @@
 
     function startAdminEvent() {
       countdownActive = false;
+      if (editMode) return;
       adminEventActive = true;
       adminAudioWasPlaying = !audio.paused;
       audio.pause();
