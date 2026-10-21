@@ -178,49 +178,49 @@
       pointer-events: none;
     }
 
-    .rift-scene {
+    .rift-burst,
+    .rift-cracks {
       position: absolute;
       inset: 0;
-      overflow: hidden;
-      background: #000;
-      animation: rift-scene-fade 60s ease-in forwards;
-    }
-
-    .rift-scene img {
-      position: absolute;
-      inset: 0;
-      display: block;
       width: 100%;
       height: 100%;
-      object-fit: cover;
     }
 
-    .rift-opening-pair { position: absolute; inset: 0; overflow: hidden; }
-
-    .rift-strip {
+    .rift-opening {
       position: absolute;
-      top: var(--strip-top);
-      left: var(--strip-left);
-      width: var(--strip-width);
-      height: var(--strip-height);
-      overflow: hidden;
-      animation: rift-strip-open 5000ms ease-in-out infinite;
+      width: clamp(100px, 22vmin, 250px);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%) scale(0.01);
+      clip-path: polygon(50% 0%, 63% 12%, 82% 5%, 86% 23%, 100% 34%, 88% 50%, 98% 68%, 79% 79%, 84% 98%, 63% 90%, 50% 100%, 36% 88%, 15% 96%, 14% 75%, 0% 62%, 11% 46%, 2% 28%, 21% 19%, 26% 4%, 43% 13%);
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.98) 0 38%, rgba(0, 0, 0, 0.82) 64%, rgba(0, 0, 0, 0.45) 78%, transparent 100%);
+      box-shadow: 0 0 18px 4px rgba(235, 245, 255, 0.7), inset 0 0 18px rgba(255, 255, 255, 0.45);
+      animation: rift-open 2500ms ease-out forwards;
     }
 
-    .rift-strip img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
+    .rift-cracks path {
+      fill: none;
+      stroke: rgba(245, 248, 255, 0.92);
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: bevel;
+      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.85));
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: rift-crack-spread 2500ms ease-out forwards;
     }
 
-    @keyframes rift-strip-open {
-      0% { transform: translate(0, 0); }
-      20%, 100% { transform: translate(var(--tear-shift), var(--open-shift)); }
+    @keyframes rift-open {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.01); }
+      12% { opacity: 0.96; }
+      68% { opacity: 0.82; transform: translate(-50%, -50%) scale(7); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(12); }
     }
-    @keyframes rift-scene-fade {
-      0%, 55% { opacity: 1; }
-      100% { opacity: 0; }
+
+    @keyframes rift-crack-spread {
+      0% { opacity: 0; stroke-dashoffset: 1; }
+      10% { opacity: 1; }
+      58% { opacity: 0.9; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
     }
     #jarona-flowery {
       position: fixed;
@@ -322,6 +322,7 @@
     let adminAudioWasPlaying = false;
     let discoActive = false;
     let riftActive = false;
+    let riftSpawnTimer;
     let riftEndTimer;
     let jaronaCountdownActive = false;
     let jaronaActive = false;
@@ -582,47 +583,77 @@
         showRandomMessage();
       }, 192000);
     }
-    function addRiftOpening() {
+    function addRiftCrack() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const centerX = width * (0.2 + Math.random() * 0.6);
+      const centerY = height * (0.18 + Math.random() * 0.64);
+      const burst = document.createElement("div");
+      burst.className = "rift-burst";
+
       const opening = document.createElement("div");
-      opening.className = "rift-opening-pair";
-      const strips = [
-        { source: "Meowl-top.png", top: 0, height: 25, left: 1, width: 99, open: -7 },
-        { source: "Meowl-top.png", top: 26, height: 14, left: 2, width: 96, open: -4 },
-        { source: "Meowl-top.png", top: 41, height: 9, left: 13, width: 87, open: -2 },
-        { source: "Meowl-bottom.png", top: 51, height: 21, left: 2, width: 98, open: 4 },
-        { source: "Meowl-bottom.png", top: 73, height: 27, left: 2, width: 98, open: 8 }
-      ];
+      opening.className = "rift-opening";
+      opening.style.left = centerX + "px";
+      opening.style.top = centerY + "px";
+      burst.appendChild(opening);
 
-      strips.forEach((stripInfo, index) => {
-        const strip = document.createElement("div");
-        strip.className = "rift-strip";
-        strip.style.setProperty("--strip-top", `${stripInfo.top}%`);
-        strip.style.setProperty("--strip-height", `${stripInfo.height}%`);
-        strip.style.setProperty("--strip-left", `${stripInfo.left}%`);
-        strip.style.setProperty("--strip-width", `${stripInfo.width}%`);
-        strip.style.setProperty("--open-shift", `${stripInfo.open}vh`);
-        strip.style.setProperty("--tear-shift", `${(Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 32)}px`);
-        strip.style.animationDelay = `${index}s`;
-        const image = document.createElement("img");
-        image.src = stripInfo.source;
-        image.alt = "";
-        strip.appendChild(image);
-        opening.appendChild(strip);
-      });
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "rift-cracks");
+      svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+      svg.setAttribute("preserveAspectRatio", "none");
 
-      riftLayer.firstElementChild.appendChild(opening);
+      function addCrackPath(points) {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("pathLength", "1");
+        path.setAttribute("d", "M " + points.map((point) => point.x + " " + point.y).join(" L "));
+        svg.appendChild(path);
+      }
+
+      const rayCount = 12;
+      const maxDistance = Math.hypot(width, height);
+      for (let i = 0; i < rayCount; i += 1) {
+        const angle = Math.PI * 2 * i / rayCount + (Math.random() - 0.5) * 0.3;
+        const distance = maxDistance * (0.38 + Math.random() * 0.45);
+        const pointOne = {
+          x: centerX + Math.cos(angle) * distance * 0.34 + (Math.random() - 0.5) * 70,
+          y: centerY + Math.sin(angle) * distance * 0.34 + (Math.random() - 0.5) * 70
+        };
+        const pointTwo = {
+          x: centerX + Math.cos(angle) * distance * 0.69 + (Math.random() - 0.5) * 90,
+          y: centerY + Math.sin(angle) * distance * 0.69 + (Math.random() - 0.5) * 90
+        };
+        const endpoint = {
+          x: centerX + Math.cos(angle) * distance,
+          y: centerY + Math.sin(angle) * distance
+        };
+        addCrackPath([{ x: centerX, y: centerY }, pointOne, pointTwo, endpoint]);
+
+        if (i % 2 === 0) {
+          const branchAngle = angle + (Math.random() < 0.5 ? -1 : 1) * (0.65 + Math.random() * 0.6);
+          const branchLength = distance * (0.18 + Math.random() * 0.14);
+          addCrackPath([
+            pointOne,
+            { x: pointOne.x + Math.cos(branchAngle) * branchLength * 0.48, y: pointOne.y + Math.sin(branchAngle) * branchLength * 0.48 },
+            { x: pointOne.x + Math.cos(branchAngle) * branchLength, y: pointOne.y + Math.sin(branchAngle) * branchLength }
+          ]);
+        }
+      }
+
+      burst.appendChild(svg);
+      riftLayer.appendChild(burst);
+      setTimeout(() => burst.remove(), 2600);
     }
+
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
-      const scene = document.createElement("div");
-      scene.className = "rift-scene";
-      riftLayer.appendChild(scene);
-      addRiftOpening();
       riftAudio.currentTime = 0;
       riftAudio.play().catch(() => {});
       banner.innerText = "the background is cracking open";
+      addRiftCrack();
+      riftSpawnTimer = setInterval(addRiftCrack, 1000);
       riftEndTimer = setTimeout(() => {
+        clearInterval(riftSpawnTimer);
         riftActive = false;
         riftAudio.pause();
         riftAudio.currentTime = 0;
