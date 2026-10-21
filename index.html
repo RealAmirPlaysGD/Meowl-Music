@@ -178,7 +178,6 @@
       pointer-events: none;
     }
 
-    .rift-burst,
     .rift-cracks {
       position: absolute;
       inset: 0;
@@ -302,7 +301,6 @@
     let adminAudioWasPlaying = false;
     let discoActive = false;
     let riftActive = false;
-    let riftSpawnTimer;
     let riftEndTimer;
     let jaronaCountdownActive = false;
     let jaronaActive = false;
@@ -566,57 +564,31 @@
     function addRiftCrack() {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const centerX = width * (0.2 + Math.random() * 0.6);
-      const centerY = height * (0.18 + Math.random() * 0.64);
-      const burst = document.createElement("div");
-      burst.className = "rift-burst";
+      const startY = height * (0.38 + Math.random() * 0.24);
+      const endY = Math.max(0, Math.min(height, startY + (Math.random() - 0.5) * height * 0.2));
+      const points = [];
+      const segmentCount = 24;
+
+      for (let i = 0; i <= segmentCount; i += 1) {
+        const progress = i / segmentCount;
+        const edge = i === 0 || i === segmentCount;
+        points.push({
+          x: width * progress,
+          y: startY + (endY - startY) * progress + (edge ? 0 : (Math.random() - 0.5) * height * 0.025)
+        });
+      }
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("class", "rift-cracks");
-      svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.setAttribute("preserveAspectRatio", "none");
 
-      function addCrackPath(points) {
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("pathLength", "1");
-        path.setAttribute("d", "M " + points.map((point) => point.x + " " + point.y).join(" L "));
-        svg.appendChild(path);
-      }
-
-      const rayCount = 12;
-      const maxDistance = Math.hypot(width, height);
-      for (let i = 0; i < rayCount; i += 1) {
-        const angle = Math.PI * 2 * i / rayCount + (Math.random() - 0.5) * 0.3;
-        const distance = maxDistance * (0.38 + Math.random() * 0.45);
-        const pointOne = {
-          x: centerX + Math.cos(angle) * distance * 0.34 + (Math.random() - 0.5) * 70,
-          y: centerY + Math.sin(angle) * distance * 0.34 + (Math.random() - 0.5) * 70
-        };
-        const pointTwo = {
-          x: centerX + Math.cos(angle) * distance * 0.69 + (Math.random() - 0.5) * 90,
-          y: centerY + Math.sin(angle) * distance * 0.69 + (Math.random() - 0.5) * 90
-        };
-        const endpoint = {
-          x: centerX + Math.cos(angle) * distance,
-          y: centerY + Math.sin(angle) * distance
-        };
-        addCrackPath([{ x: centerX, y: centerY }, pointOne, pointTwo, endpoint]);
-
-        if (i % 2 === 0) {
-          const branchAngle = angle + (Math.random() < 0.5 ? -1 : 1) * (0.65 + Math.random() * 0.6);
-          const branchLength = distance * (0.18 + Math.random() * 0.14);
-          addCrackPath([
-            pointOne,
-            { x: pointOne.x + Math.cos(branchAngle) * branchLength * 0.48, y: pointOne.y + Math.sin(branchAngle) * branchLength * 0.48 },
-            { x: pointOne.x + Math.cos(branchAngle) * branchLength, y: pointOne.y + Math.sin(branchAngle) * branchLength }
-          ]);
-        }
-      }
-
-      burst.appendChild(svg);
-      riftLayer.appendChild(burst);
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("pathLength", "1");
+      path.setAttribute("d", "M " + points.map((point) => point.x + " " + point.y).join(" L "));
+      svg.appendChild(path);
+      riftLayer.appendChild(svg);
     }
-
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
@@ -624,9 +596,7 @@
       riftAudio.play().catch(() => {});
       banner.innerText = "the background is cracking open";
       addRiftCrack();
-      riftSpawnTimer = setInterval(addRiftCrack, 1000);
       riftEndTimer = setTimeout(() => {
-        clearInterval(riftSpawnTimer);
         riftActive = false;
         riftAudio.pause();
         riftAudio.currentTime = 0;
