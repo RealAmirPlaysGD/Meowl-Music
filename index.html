@@ -177,6 +177,19 @@
       overflow: hidden;
       pointer-events: none;
     }
+    #rift-layer.rift-active {
+      background-color: #063a82;
+      background-image: linear-gradient(rgba(51,144,255,.22) 1px,transparent 1px),linear-gradient(90deg,rgba(51,144,255,.22) 1px,transparent 1px),linear-gradient(rgba(0,16,68,.42) 1px,transparent 1px),linear-gradient(90deg,rgba(0,16,68,.42) 1px,transparent 1px),linear-gradient(90deg,#031c51,#0754a5 45%,#031b50);
+      background-size: 32px 32px,32px 32px,160px 160px,160px 160px,100% 100%;
+      animation: rift-grid-scroll 12s linear infinite,rift-scene-fade 60s ease-in forwards;
+    }
+    .rift-geometry { position:absolute; inset:0; width:100%; height:100%; opacity:.94; filter:drop-shadow(0 0 4px rgba(132,196,255,.95)); animation:rift-geometry-fade 60s ease-in forwards; }
+    .rift-geometry .outline { fill:rgba(3,27,72,.76); stroke:#e8f4ff; stroke-width:5; vector-effect:non-scaling-stroke; }
+    .rift-geometry .tiles { fill:url(#rift-tile-grid); stroke:#b9d9ff; stroke-width:2; vector-effect:non-scaling-stroke; }
+    .rift-geometry .spike { fill:#062c68; stroke:#f0f7ff; stroke-width:5; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+    @keyframes rift-grid-scroll { to { background-position:32px 32px,32px 32px,160px 160px,160px 160px,0 0; } }
+    @keyframes rift-scene-fade { 0%,70% { opacity:1; } 100% { opacity:.08; } }
+    @keyframes rift-geometry-fade { 0%,62% { opacity:.94; } 100% { opacity:.04; } }
 
     .rift-burst,
     .rift-cracks {
@@ -583,6 +596,21 @@
         showRandomMessage();
       }, 192000);
     }
+    function buildRiftGeometry() {
+      const scene = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      scene.setAttribute("class", "rift-geometry");
+      scene.setAttribute("viewBox", "0 0 1600 900");
+      scene.setAttribute("preserveAspectRatio", "xMidYMid slice");
+      scene.setAttribute("aria-hidden", "true");
+      scene.innerHTML = `<defs><pattern id="rift-tile-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#1d74c9" stroke-width="2"/></pattern></defs>
+        <g class="rift-world">${[0, 1600].map(offset => `<g transform="translate(${offset} 0)">
+          <path class="outline" d="M0 665H280V590H335V665H590V560H680V665H920V535H1060V665H1335V585H1600V900H0Z M110 285H235V410H110ZM640 180H755V315H640ZM1215 250H1365V375H1215Z"/>
+          <path class="tiles" d="M0 665H280V590H335V665H590V560H680V665H920V535H1060V665H1335V585H1600V900H0Z M110 285H235V410H110ZM640 180H755V315H640ZM1215 250H1365V375H1215Z"/>
+          <path class="spike" d="M80 665L130 565L180 665ZM280 590L315 520L350 590ZM495 665L545 555L595 665ZM680 665L725 575L770 665ZM920 535L965 435L1010 535ZM1060 665L1110 535L1160 665ZM1335 585L1380 485L1425 585ZM235 410L285 310L335 410ZM755 315L800 220L845 315ZM1365 375L1410 280L1455 375Z"/>
+        </g>`).join("")}</g>`;
+      scene.querySelector(".rift-world").animate([{ transform: "translateX(0)" }, { transform: "translateX(-1600px)" }], { duration: 18000, iterations: Infinity, easing: "linear" });
+      return scene;
+    }
     function addRiftCrack() {
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -647,6 +675,8 @@
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
+      riftLayer.classList.add("rift-active");
+      riftLayer.appendChild(buildRiftGeometry());
       riftAudio.currentTime = 0;
       riftAudio.play().catch(() => {});
       banner.innerText = "the background is cracking open";
@@ -658,6 +688,7 @@
         riftAudio.pause();
         riftAudio.currentTime = 0;
         riftLayer.replaceChildren();
+        riftLayer.classList.remove("rift-active");
         showRandomMessage();
       }, 60000);
     }
