@@ -197,7 +197,7 @@
       filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.7));
       stroke-dasharray: 1;
       stroke-dashoffset: 1;
-      animation: rift-crack-spread 60000ms linear forwards;
+      animation: rift-crack-spread 20000ms linear forwards;
     }
 
     @keyframes rift-crack-spread {
@@ -603,7 +603,7 @@
       riftAudio.play().catch(() => {});
       banner.innerText = "Breaking Open";
       const firstCrack = addRiftCrack();
-      setTimeout(() => addRiftCrack(firstCrack), 60000);
+      setTimeout(() => addRiftCrack(firstCrack), 20000);
       riftEndTimer = setTimeout(() => {
         riftAudio.pause();
         riftAudio.currentTime = 0;
