@@ -204,7 +204,7 @@
       width: var(--strip-width);
       height: var(--strip-height);
       overflow: hidden;
-      animation: rift-strip-open 8000ms linear forwards;
+      animation: rift-strip-open 8000ms ease-in-out infinite;
     }
 
     .rift-strip img {
@@ -215,8 +215,9 @@
     }
 
     @keyframes rift-strip-open {
-      0% { transform: translate(0, 0); opacity: 1; }
-      100% { transform: translate(var(--tear-shift), var(--open-shift)); opacity: 0; }
+      0%, 8% { transform: translate(0, 0); opacity: 1; }
+      82% { transform: translate(var(--tear-shift), var(--open-shift)); opacity: .85; }
+      100% { transform: translate(var(--tear-shift), var(--open-shift)); opacity: .35; }
     }
     @keyframes rift-scene-fade {
       0%, 55% { opacity: 1; }
@@ -322,7 +323,6 @@
     let adminAudioWasPlaying = false;
     let discoActive = false;
     let riftActive = false;
-    let riftSpawnTimer;
     let riftEndTimer;
     let jaronaCountdownActive = false;
     let jaronaActive = false;
@@ -611,7 +611,6 @@
       }
 
       riftLayer.firstElementChild.appendChild(opening);
-      setTimeout(() => opening.remove(), 8100);
     }
     function startRiftEvent() {
       if (!canStartEvent()) return;
@@ -620,12 +619,10 @@
       scene.className = "rift-scene";
       riftLayer.appendChild(scene);
       addRiftOpening();
-      riftSpawnTimer = setInterval(addRiftOpening, 900);
       riftAudio.currentTime = 0;
       riftAudio.play().catch(() => {});
       banner.innerText = "the background is cracking open";
       riftEndTimer = setTimeout(() => {
-        clearInterval(riftSpawnTimer);
         riftActive = false;
         riftAudio.pause();
         riftAudio.currentTime = 0;
