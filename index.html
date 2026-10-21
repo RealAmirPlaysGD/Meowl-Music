@@ -195,27 +195,47 @@
       object-fit: cover;
     }
 
-    .rift-slice {
+    .rift-half {
+      position: absolute;
+      left: 0;
+      right: 0;
+      animation-duration: 3200ms;
+      animation-timing-function: steps(1, end);
+      animation-iteration-count: infinite;
+    }
+
+    .rift-half img {
       position: absolute;
       inset: 0;
-      animation: rift-tear 3200ms steps(1, end) infinite;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
     }
 
-    .rift-slice img {
-      clip-path: inset(var(--slice-top) 0 calc(100% - var(--slice-bottom)) 0);
+    .rift-half-top { top: 0; height: 50%; animation-name: rift-top-tear; }
+    .rift-half-bottom { bottom: 0; height: 50%; animation-name: rift-bottom-tear; }
+    @keyframes rift-top-tear {
+      0%, 12%, 100% { transform: translate(0, 0); filter: none; }
+      13% { transform: translate(var(--tear-shift), -1px); filter: brightness(1.2); }
+      15% { transform: translate(calc(var(--tear-shift) * -.35), -2px); }
+      18%, 48% { transform: translate(0, 0); }
+      49% { transform: translate(calc(var(--tear-shift) * -1), -3px); filter: brightness(1.12); }
+      51% { transform: translate(0, 0); }
+      76% { transform: translate(var(--tear-shift), -4px); }
+      78%, 99% { transform: translate(0, 0); }
     }
 
-    @keyframes rift-tear {
-      0%, 12%, 100% { transform: translateX(0); filter: none; }
-      13% { transform: translateX(var(--tear-shift)); filter: brightness(1.2); }
-      15% { transform: translateX(calc(var(--tear-shift) * -0.35)); }
-      18%, 48% { transform: translateX(0); }
-      49% { transform: translateX(calc(var(--tear-shift) * -1)); filter: brightness(1.12); }
-      51% { transform: translateX(0); }
-      76% { transform: translateX(var(--tear-shift)); }
-      78%, 99% { transform: translateX(0); }
+    @keyframes rift-bottom-tear {
+      0%, 12%, 100% { transform: translate(0, 0); filter: none; }
+      13% { transform: translate(calc(var(--tear-shift) * -.6), 2px); filter: brightness(1.16); }
+      15% { transform: translate(var(--tear-shift), 3px); }
+      18%, 48% { transform: translate(0, 0); }
+      49% { transform: translate(var(--tear-shift), 5px); filter: brightness(1.1); }
+      51% { transform: translate(0, 0); }
+      76% { transform: translate(calc(var(--tear-shift) * -.8), 7px); }
+      78%, 99% { transform: translate(0, 0); }
     }
-
     @keyframes rift-scene-fade {
       0%, 55% { opacity: 1; }
       100% { opacity: 0; }
@@ -583,24 +603,17 @@
     function buildRiftScene() {
       const scene = document.createElement("div");
       scene.className = "rift-scene";
-      const image = document.createElement("img");
-      image.src = "meowl.png";
-      image.alt = "";
-      scene.appendChild(image);
 
-      const strips = [4, 9, 15, 23, 32, 41, 53, 66, 78, 89];
-      for (const top of strips) {
-        const slice = document.createElement("div");
-        slice.className = "rift-slice";
-        slice.style.setProperty("--slice-top", `${top}%`);
-        slice.style.setProperty("--slice-bottom", `${Math.min(top + 4 + Math.random() * 5, 100)}%`);
-        slice.style.setProperty("--tear-shift", `${(Math.random() < 0.5 ? -1 : 1) * (12 + Math.random() * 90)}px`);
-        slice.style.animationDelay = `${Math.random() * 2.5}s`;
-        const stripImage = document.createElement("img");
-        stripImage.src = "meowl.png";
-        stripImage.alt = "";
-        slice.appendChild(stripImage);
-        scene.appendChild(slice);
+      for (const [part, source] of [["top", "Meowl-top.png"], ["bottom", "Meowl-bottom.png"]]) {
+        const half = document.createElement("div");
+        half.className = `rift-half rift-half-${part}`;
+        half.style.setProperty("--tear-shift", `${(Math.random() < 0.5 ? -1 : 1) * (12 + Math.random() * 90)}px`);
+        half.style.animationDelay = `${Math.random() * 1.2}s`;
+        const image = document.createElement("img");
+        image.src = source;
+        image.alt = "";
+        half.appendChild(image);
+        scene.appendChild(half);
       }
       return scene;
     }
