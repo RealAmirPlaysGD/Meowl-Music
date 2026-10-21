@@ -188,21 +188,19 @@
 
     .rift-cracks path {
       fill: none;
-      stroke: rgba(245, 248, 255, 0.92);
-      stroke-width: 2.4;
+      stroke: #000;
+      stroke-width: 3.2;
       stroke-linecap: round;
       stroke-linejoin: bevel;
-      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.85));
+      filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.7));
       stroke-dasharray: 1;
       stroke-dashoffset: 1;
-      animation: rift-crack-spread 2500ms ease-out forwards;
+      animation: rift-crack-spread 60000ms linear forwards;
     }
 
     @keyframes rift-crack-spread {
-      0% { opacity: 0; stroke-dashoffset: 1; }
-      10% { opacity: 1; }
-      58% { opacity: 0.9; stroke-dashoffset: 0; }
-      100% { opacity: 0; stroke-dashoffset: 0; }
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      100% { opacity: 1; stroke-dashoffset: 0; }
     }
     #jarona-flowery {
       position: fixed;
@@ -617,7 +615,6 @@
 
       burst.appendChild(svg);
       riftLayer.appendChild(burst);
-      setTimeout(() => burst.remove(), 2600);
     }
 
     function startRiftEvent() {
@@ -633,7 +630,6 @@
         riftActive = false;
         riftAudio.pause();
         riftAudio.currentTime = 0;
-        riftLayer.replaceChildren();
         showRandomMessage();
       }, 60000);
     }
