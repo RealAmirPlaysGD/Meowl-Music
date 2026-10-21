@@ -181,35 +181,8 @@
     }
 
     #rift-layer.rift-fading { opacity: 0; }
-    body.screen-collapsed #meowl-image { visibility: hidden; }
 
-    #collapse-grid {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .collapse-tile {
-      position: absolute;
-      background-image: url("meowl.png");
-      background-repeat: no-repeat;
-      transition: transform 2500ms cubic-bezier(.72, 0, .95, .35), opacity 2500ms ease-in;
-      will-change: transform, opacity;
-    }
-
-    #collapse-grid.collapsing .collapse-tile {
-      transform: translate(var(--collapse-x), var(--collapse-y)) rotate(var(--collapse-rotate)) scale(.08);
-      opacity: 0;
-    }
-
-    #collapse-grid.repairing .collapse-tile {
-      transition-duration: 3000ms;
-      transition-timing-function: cubic-bezier(.12, .75, .3, 1);
-      transform: none;
-      opacity: 1;
-    }
+    #collapse-canvas { position: fixed; inset: 0; z-index: 5; width: 100%; height: 100%; pointer-events: none; }
 
     .rift-cracks {
       position: absolute;
@@ -270,6 +243,7 @@
   <audio id="rift-audio" src="cracking.mp3" preload="auto"></audio>
   <audio id="rift-music" src="EVERY END.ogg" preload="auto" loop></audio>
   <div id="rift-layer" aria-hidden="true"></div>
+  <canvas id="collapse-canvas" aria-hidden="true" hidden></canvas>
   <img id="jarona-flowery" src="flowery.png" alt="" hidden>
   <canvas id="floating-meowls" aria-hidden="true"></canvas>
   <button id="edit-exit-mode" type="button" contenteditable="false" hidden>Exit edit mode</button>
@@ -299,6 +273,8 @@
     const riftLayer = document.getElementById("rift-layer");
     const riftAudio = document.getElementById("rift-audio");
     const riftMusic = document.getElementById("rift-music");
+    const collapseCanvas = document.getElementById("collapse-canvas");
+    const collapseContext = collapseCanvas.getContext("2d");
     const jaronaFlowery = document.getElementById("jarona-flowery");
     const banner = document.getElementById("status-banner");
     const editExitButton = document.getElementById("edit-exit-mode");
@@ -337,6 +313,8 @@
     let discoActive = false;
     let riftActive = false;
     let riftEndTimer;
+    let collapseFrame, collapsePieces = [], collapseMode = "closed";
+    let collapseStartedAt = 0, collapseRepairStartedAt = 0;
     let jaronaCountdownActive = false;
     let jaronaActive = false;
     let pointerInsideWindow = true;
@@ -632,72 +610,85 @@
     }
 
     function collapseScreenIntoSquares() {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const source = image;
-      const sourceWidth = source.naturalWidth || 770;
-      const sourceHeight = source.naturalHeight || 850;
-      const scale = Math.max(width / sourceWidth, height / sourceHeight);
-      const backgroundWidth = sourceWidth * scale;
-      const backgroundHeight = sourceHeight * scale;
-      const backgroundX = (width - backgroundWidth) / 2;
-      const backgroundY = (height - backgroundHeight) / 2;
-      const columns = Math.max(1, Math.ceil(width / 80));
-      const rows = Math.max(1, Math.ceil(height / 80));
-      const tileWidth = width / columns;
-      const tileHeight = height / rows;
-      const grid = document.createElement("div");
-      grid.id = "collapse-grid";
-      grid.setAttribute("aria-hidden", "true");
-
-      for (let row = 0; row < rows; row += 1) {
-        for (let column = 0; column < columns; column += 1) {
-          const x = column * tileWidth;
-          const y = row * tileHeight;
-          const tile = document.createElement("div");
-          tile.className = "collapse-tile";
-          tile.style.left = `${x}px`;
-          tile.style.top = `${y}px`;
-          tile.style.width = `${tileWidth + 1}px`;
-          tile.style.height = `${tileHeight + 1}px`;
-          tile.style.backgroundSize = `${backgroundWidth}px ${backgroundHeight}px`;
-          tile.style.backgroundPosition = `${backgroundX - x}px ${backgroundY - y}px`;
-          tile.style.setProperty("--collapse-x", `${(Math.random() - 0.5) * width * 0.7}px`);
-          tile.style.setProperty("--collapse-y", `${(Math.random() - 0.5) * height * 0.7}px`);
-          tile.style.setProperty("--collapse-rotate", `${(Math.random() - 0.5) * 100}deg`);
-          grid.appendChild(tile);
+      const width = window.innerWidth, height = window.innerHeight;
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+      const sw = image.naturalWidth || 770, sh = image.naturalHeight || 850;
+      const scale = Math.max(width / sw, height / sh);
+      const sourceX = (sw - width / scale) / 2, sourceY = (sh - height / scale) / 2;
+      collapseCanvas.width = Math.round(width * ratio);
+      collapseCanvas.height = Math.round(height * ratio);
+      collapseContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const columns = 8, rows = 6, cw = width / columns, ch = height / rows, vertices = [];
+      for (let row = 0; row <= rows; row++) {
+        const line = [];
+        for (let col = 0; col <= columns; col++) {
+          const edge = row === 0 || row === rows || col === 0 || col === columns;
+          line.push({ x: col*cw + (edge ? 0 : (Math.random()-.5)*cw*.3), y: row*ch + (edge ? 0 : (Math.random()-.5)*ch*.3) });
+        }
+        vertices.push(line);
+      }
+      collapsePieces = [];
+      for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) {
+        const a=vertices[row][col], b=vertices[row][col+1], c=vertices[row+1][col+1], d=vertices[row+1][col];
+        const tris = Math.random()<.5 ? [[a,b,c],[a,c,d]] : [[a,b,d],[b,c,d]];
+        for (const points of tris) {
+          const minX=Math.min(...points.map(p=>p.x)), maxX=Math.max(...points.map(p=>p.x));
+          const minY=Math.min(...points.map(p=>p.y)), maxY=Math.max(...points.map(p=>p.y));
+          collapsePieces.push({
+            points,minX,maxX,minY,maxY,
+            cx:points.reduce((v,p)=>v+p.x,0)/3, cy:points.reduce((v,p)=>v+p.y,0)/3,
+            sx:sourceX+minX/scale, sy:sourceY+minY/scale, sw:(maxX-minX)/scale, sh:(maxY-minY)/scale,
+            tx:(Math.random()-.5)*width*.22, ty:30+Math.random()*height*.16, tr:(Math.random()-.5)*.3
+          });
         }
       }
-
-      document.body.classList.add("screen-collapsed");
-      document.body.appendChild(grid);
-      requestAnimationFrame(() => grid.classList.add("collapsing"));
+      collapseStartedAt=performance.now(); collapseMode="falling"; collapseCanvas.hidden=false;
+      image.style.visibility="hidden"; cancelAnimationFrame(collapseFrame);
+      collapseFrame=requestAnimationFrame(drawCollapseShards);
     }
+
+    function drawCollapseShards(timestamp) {
+      const width=window.innerWidth, height=window.innerHeight, repairing=collapseMode==="repairing";
+      const progress=Math.min((timestamp-(repairing?collapseRepairStartedAt:collapseStartedAt))/(repairing?3000:2200),1);
+      const ease=progress*progress*(3-2*progress);
+      collapseContext.clearRect(0,0,width,height);
+      for (const piece of collapsePieces) {
+        const amount=repairing?1-ease:(collapseMode==="scattered"?1:ease);
+        const dx=piece.tx*amount, dy=piece.ty*amount, rotation=piece.tr*amount;
+        collapseContext.save(); collapseContext.translate(piece.cx+dx,piece.cy+dy); collapseContext.rotate(rotation);
+        collapseContext.beginPath();
+        piece.points.forEach((p,i)=>i?collapseContext.lineTo(p.x-piece.cx,p.y-piece.cy):collapseContext.moveTo(p.x-piece.cx,p.y-piece.cy));
+        collapseContext.closePath(); collapseContext.clip();
+        collapseContext.drawImage(image,piece.sx,piece.sy,piece.sw,piece.sh,piece.minX-piece.cx,piece.minY-piece.cy,piece.maxX-piece.minX,piece.maxY-piece.minY);
+        collapseContext.strokeStyle="rgba(0,0,0,.8)"; collapseContext.lineWidth=1; collapseContext.stroke(); collapseContext.restore();
+      }
+      if (repairing && progress>=1) {
+        collapseContext.clearRect(0,0,width,height); collapseCanvas.hidden=true; image.style.visibility="";
+        collapseMode="closed"; collapsePieces=[]; return;
+      }
+      if (collapseMode==="falling" && progress>=1) collapseMode="scattered";
+      collapseFrame=requestAnimationFrame(drawCollapseShards);
+    }
+
+    function repairCollapse() {
+      if (collapseMode==="closed") return;
+      collapseMode="repairing"; collapseRepairStartedAt=performance.now(); cancelAnimationFrame(collapseFrame);
+      collapseFrame=requestAnimationFrame(drawCollapseShards);
+    }
+
     function startRiftEvent() {
       if (!canStartEvent()) return;
-      riftActive = true;
-      riftMusic.currentTime = 0;
-      riftMusic.play().catch(() => {});
-      banner.innerText = "THE WORLD IS CRACKING OPEN";
-      addRiftCrack();
-      setTimeout(collapseScreenIntoSquares, 20000);
-      riftEndTimer = setTimeout(() => {
-        riftAudio.pause();
-        riftAudio.currentTime = 0;
-        riftMusic.pause();
-        riftMusic.currentTime = 0;
-        const collapseGrid = document.getElementById("collapse-grid");
-        if (collapseGrid) collapseGrid.classList.add("repairing");
-        riftLayer.classList.add("rift-fading");
-        setTimeout(() => {
-          riftLayer.replaceChildren();
-          riftLayer.classList.remove("rift-fading");
-          document.body.classList.remove("screen-collapsed");
-          collapseGrid?.remove();
-          riftActive = false;
-          showRandomMessage();
-        }, 3000);
-      }, 120000);
+      riftActive=true; riftMusic.currentTime=0; riftMusic.play().catch(()=>{});
+      banner.innerText="THE WORLD IS CRACKING OPEN"; addRiftCrack();
+      setTimeout(collapseScreenIntoSquares,20000);
+      riftEndTimer=setTimeout(()=>{
+        riftAudio.pause(); riftAudio.currentTime=0; riftMusic.pause(); riftMusic.currentTime=0;
+        repairCollapse(); riftLayer.classList.add("rift-fading");
+        setTimeout(()=>{
+          riftLayer.replaceChildren(); riftLayer.classList.remove("rift-fading");
+          riftActive=false; showRandomMessage();
+        },3000);
+      },120000);
     }
     function addFloatingMeowl(options = {}) {
       const size = options.size ?? 55 + Math.random() * 95;
