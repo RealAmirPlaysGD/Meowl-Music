@@ -176,7 +176,10 @@
       z-index: 4;
       overflow: hidden;
       pointer-events: none;
+      transition: opacity 3s ease;
     }
+
+    #rift-layer.rift-fading { opacity: 0; }
 
     .rift-cracks {
       position: absolute;
@@ -597,10 +600,15 @@
       banner.innerText = "the background is cracking open";
       addRiftCrack();
       riftEndTimer = setTimeout(() => {
-        riftActive = false;
         riftAudio.pause();
         riftAudio.currentTime = 0;
-        showRandomMessage();
+        riftLayer.classList.add("rift-fading");
+        setTimeout(() => {
+          riftLayer.replaceChildren();
+          riftLayer.classList.remove("rift-fading");
+          riftActive = false;
+          showRandomMessage();
+        }, 3000);
       }, 60000);
     }
     function addFloatingMeowl(options = {}) {
