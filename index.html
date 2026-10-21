@@ -249,7 +249,7 @@
     <button type="button" data-event="admin-now">Start admin event now (4 minutes)</button>
     <button type="button" data-event="meow">Play secret meow sound</button>
     <button type="button" data-event="disco">Disco meowl (1 minute)</button>
-    <button type="button" data-event="rift">Background Rift (1 minute)</button>
+    <button type="button" data-event="rift">Breaking Open (2 minutes)</button>
     <button type="button" data-event="disco-countdown">Start disco countdown (1 minute)</button>
     <button type="button" data-event="jarona">Jarona! (3 minutes 12 seconds)</button>
     <button type="button" data-event="jarona-countdown">Jarona! countdown (2 minutes)</button>
@@ -564,10 +564,12 @@
         showRandomMessage();
       }, 192000);
     }
-    function addRiftCrack() {
+    function addRiftCrack(branchFrom = null) {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const startY = height * (0.38 + Math.random() * 0.24);
+      const branchPoint = branchFrom ? branchFrom[Math.floor(branchFrom.length * 0.55)] : null;
+      const startX = branchPoint ? branchPoint.x : 0;
+      const startY = branchPoint ? branchPoint.y : height * (0.38 + Math.random() * 0.24);
       const endY = Math.max(0, Math.min(height, startY + (Math.random() - 0.5) * height * 0.2));
       const points = [];
       const segmentCount = 24;
@@ -576,7 +578,7 @@
         const progress = i / segmentCount;
         const edge = i === 0 || i === segmentCount;
         points.push({
-          x: width * progress,
+          x: startX + (width - startX) * progress,
           y: startY + (endY - startY) * progress + (edge ? 0 : (Math.random() - 0.5) * height * 0.025)
         });
       }
@@ -591,14 +593,17 @@
       path.setAttribute("d", "M " + points.map((point) => point.x + " " + point.y).join(" L "));
       svg.appendChild(path);
       riftLayer.appendChild(svg);
+      return points;
     }
+
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
       riftAudio.currentTime = 0;
       riftAudio.play().catch(() => {});
-      banner.innerText = "the background is cracking open";
-      addRiftCrack();
+      banner.innerText = "Breaking Open";
+      const firstCrack = addRiftCrack();
+      setTimeout(() => addRiftCrack(firstCrack), 60000);
       riftEndTimer = setTimeout(() => {
         riftAudio.pause();
         riftAudio.currentTime = 0;
@@ -609,7 +614,7 @@
           riftActive = false;
           showRandomMessage();
         }, 3000);
-      }, 60000);
+      }, 120000);
     }
     function addFloatingMeowl(options = {}) {
       const size = options.size ?? 55 + Math.random() * 95;
