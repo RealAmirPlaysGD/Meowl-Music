@@ -181,41 +181,34 @@
     }
 
     #rift-layer.rift-fading { opacity: 0; }
-    body.screen-collapsing #meowl-image,
-    body.screen-collapsing #rift-layer,
-    body.screen-collapsing #status-banner,
-    body.screen-collapsing #admin-toggle,
-    body.screen-repairing #meowl-image,
-    body.screen-repairing #rift-layer,
-    body.screen-repairing #status-banner,
-    body.screen-repairing #admin-toggle {
-      transform-origin: center;
+    body.screen-collapsed #meowl-image { visibility: hidden; }
+
+    #collapse-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      overflow: hidden;
+      pointer-events: none;
     }
 
-    body.screen-collapsing #meowl-image,
-    body.screen-collapsing #rift-layer,
-    body.screen-collapsing #status-banner,
-    body.screen-collapsing #admin-toggle {
-      animation: screen-collapse 2500ms ease-in forwards;
+    .collapse-tile {
+      position: absolute;
+      background-image: url("meowl.png");
+      background-repeat: no-repeat;
+      transition: transform 2500ms cubic-bezier(.72, 0, .95, .35), opacity 2500ms ease-in;
+      will-change: transform, opacity;
     }
 
-    body.screen-repairing #meowl-image,
-    body.screen-repairing #rift-layer,
-    body.screen-repairing #status-banner,
-    body.screen-repairing #admin-toggle {
-      animation: screen-repair 3000ms ease-out forwards;
+    #collapse-grid.collapsing .collapse-tile {
+      transform: translate(var(--collapse-x), var(--collapse-y)) rotate(var(--collapse-rotate)) scale(.08);
+      opacity: 0;
     }
 
-    @keyframes screen-collapse {
-      0% { transform: scaleY(1); filter: brightness(1); }
-      78% { transform: scaleY(.012); filter: brightness(.75); }
-      100% { transform: scaleY(.002); filter: brightness(.2); }
-    }
-
-    @keyframes screen-repair {
-      0% { transform: scaleY(.002); filter: brightness(.2); }
-      35% { transform: scaleY(.012); filter: brightness(.75); }
-      100% { transform: scaleY(1); filter: brightness(1); }
+    #collapse-grid.repairing .collapse-tile {
+      transition-duration: 3000ms;
+      transition-timing-function: cubic-bezier(.12, .75, .3, 1);
+      transform: none;
+      opacity: 1;
     }
 
     .rift-cracks {
@@ -638,6 +631,48 @@
       return points;
     }
 
+    function collapseScreenIntoSquares() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const source = image;
+      const sourceWidth = source.naturalWidth || 770;
+      const sourceHeight = source.naturalHeight || 850;
+      const scale = Math.max(width / sourceWidth, height / sourceHeight);
+      const backgroundWidth = sourceWidth * scale;
+      const backgroundHeight = sourceHeight * scale;
+      const backgroundX = (width - backgroundWidth) / 2;
+      const backgroundY = (height - backgroundHeight) / 2;
+      const columns = Math.max(1, Math.ceil(width / 80));
+      const rows = Math.max(1, Math.ceil(height / 80));
+      const tileWidth = width / columns;
+      const tileHeight = height / rows;
+      const grid = document.createElement("div");
+      grid.id = "collapse-grid";
+      grid.setAttribute("aria-hidden", "true");
+
+      for (let row = 0; row < rows; row += 1) {
+        for (let column = 0; column < columns; column += 1) {
+          const x = column * tileWidth;
+          const y = row * tileHeight;
+          const tile = document.createElement("div");
+          tile.className = "collapse-tile";
+          tile.style.left = `${x}px`;
+          tile.style.top = `${y}px`;
+          tile.style.width = `${tileWidth + 1}px`;
+          tile.style.height = `${tileHeight + 1}px`;
+          tile.style.backgroundSize = `${backgroundWidth}px ${backgroundHeight}px`;
+          tile.style.backgroundPosition = `${backgroundX - x}px ${backgroundY - y}px`;
+          tile.style.setProperty("--collapse-x", `${(Math.random() - 0.5) * width * 0.7}px`);
+          tile.style.setProperty("--collapse-y", `${(Math.random() - 0.5) * height * 0.7}px`);
+          tile.style.setProperty("--collapse-rotate", `${(Math.random() - 0.5) * 100}deg`);
+          grid.appendChild(tile);
+        }
+      }
+
+      document.body.classList.add("screen-collapsed");
+      document.body.appendChild(grid);
+      requestAnimationFrame(() => grid.classList.add("collapsing"));
+    }
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
@@ -645,19 +680,20 @@
       riftMusic.play().catch(() => {});
       banner.innerText = "THE WORLD IS CRACKING OPEN";
       addRiftCrack();
-      setTimeout(() => document.body.classList.add("screen-collapsing"), 20000);
+      setTimeout(collapseScreenIntoSquares, 20000);
       riftEndTimer = setTimeout(() => {
         riftAudio.pause();
         riftAudio.currentTime = 0;
         riftMusic.pause();
         riftMusic.currentTime = 0;
-        document.body.classList.remove("screen-collapsing");
-        document.body.classList.add("screen-repairing");
+        const collapseGrid = document.getElementById("collapse-grid");
+        if (collapseGrid) collapseGrid.classList.add("repairing");
         riftLayer.classList.add("rift-fading");
         setTimeout(() => {
           riftLayer.replaceChildren();
           riftLayer.classList.remove("rift-fading");
-          document.body.classList.remove("screen-repairing");
+          document.body.classList.remove("screen-collapsed");
+          collapseGrid?.remove();
           riftActive = false;
           showRandomMessage();
         }, 3000);
