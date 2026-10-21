@@ -255,6 +255,7 @@
   <audio id="joke-audio" src="joke.mp3" preload="auto"></audio>
   <audio id="jarona-spawn-audio" src="meowl-Jarona.mp3" preload="auto"></audio>
   <div id="jarona-layer" aria-hidden="true"></div>
+  <audio id="rift-audio" src="EVERY END.ogg" preload="auto" loop></audio>
   <div id="rift-layer" aria-hidden="true"></div>
   <img id="jarona-flowery" src="flowery.png" alt="" hidden>
   <canvas id="floating-meowls" aria-hidden="true"></canvas>
@@ -283,6 +284,7 @@
     const jaronaSpawnAudio = document.getElementById("jarona-spawn-audio");
     const jaronaLayer = document.getElementById("jarona-layer");
     const riftLayer = document.getElementById("rift-layer");
+    const riftAudio = document.getElementById("rift-audio");
     const jaronaFlowery = document.getElementById("jarona-flowery");
     const banner = document.getElementById("status-banner");
     const editExitButton = document.getElementById("edit-exit-mode");
@@ -645,12 +647,16 @@
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
+      riftAudio.currentTime = 0;
+      riftAudio.play().catch(() => {});
       banner.innerText = "the background is cracking open";
       addRiftCrack();
       riftSpawnTimer = setInterval(addRiftCrack, 1000);
       riftEndTimer = setTimeout(() => {
         clearInterval(riftSpawnTimer);
         riftActive = false;
+        riftAudio.pause();
+        riftAudio.currentTime = 0;
         riftLayer.replaceChildren();
         showRandomMessage();
       }, 60000);
