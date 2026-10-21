@@ -195,37 +195,28 @@
       object-fit: cover;
     }
 
-    .rift-opening-pair { position:absolute; inset:0; overflow:hidden; }
-    .rift-half {
+    .rift-opening-pair { position: absolute; inset: 0; overflow: hidden; }
+
+    .rift-strip {
       position: absolute;
-      left: 0;
-      right: 0;
-      opacity: 1;
-      animation-duration: 8000ms;
-      animation-timing-function: linear;
-      animation-fill-mode: forwards;
+      top: var(--strip-top);
+      left: var(--strip-left);
+      width: var(--strip-width);
+      height: var(--strip-height);
+      overflow: hidden;
+      animation: rift-strip-open 8000ms linear forwards;
     }
 
-    .rift-half img {
-      position: absolute;
-      inset: 0;
+    .rift-strip img {
       display: block;
       width: 100%;
       height: 100%;
       object-fit: fill;
     }
 
-    .rift-half-top { top: 0; height: 50%; animation-name: rift-open-top; }
-    .rift-half-bottom { bottom: 0; height: 50%; animation-name: rift-open-bottom; }
-
-    @keyframes rift-open-top {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-110vh); opacity: 0; }
-    }
-
-    @keyframes rift-open-bottom {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(110vh); opacity: 0; }
+    @keyframes rift-strip-open {
+      0% { transform: translate(0, 0); opacity: 1; }
+      100% { transform: translate(var(--tear-shift), var(--open-shift)); opacity: 0; }
     }
     @keyframes rift-scene-fade {
       0%, 55% { opacity: 1; }
@@ -595,15 +586,28 @@
     function addRiftOpening() {
       const opening = document.createElement("div");
       opening.className = "rift-opening-pair";
+      const strips = [
+        { source: "Meowl-top.png", top: 0, height: 25, left: 1, width: 99, open: -7 },
+        { source: "Meowl-top.png", top: 26, height: 14, left: 2, width: 96, open: -4 },
+        { source: "Meowl-top.png", top: 41, height: 9, left: 13, width: 87, open: -2 },
+        { source: "Meowl-bottom.png", top: 51, height: 21, left: 2, width: 98, open: 4 },
+        { source: "Meowl-bottom.png", top: 73, height: 27, left: 2, width: 98, open: 8 }
+      ];
 
-      for (const [part, source] of [["top", "Meowl-top.png"], ["bottom", "Meowl-bottom.png"]]) {
-        const half = document.createElement("div");
-        half.className = `rift-half rift-half-${part}`;
+      for (const stripInfo of strips) {
+        const strip = document.createElement("div");
+        strip.className = "rift-strip";
+        strip.style.setProperty("--strip-top", `${stripInfo.top}%`);
+        strip.style.setProperty("--strip-height", `${stripInfo.height}%`);
+        strip.style.setProperty("--strip-left", `${stripInfo.left}%`);
+        strip.style.setProperty("--strip-width", `${stripInfo.width}%`);
+        strip.style.setProperty("--open-shift", `${stripInfo.open}vh`);
+        strip.style.setProperty("--tear-shift", `${(Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 32)}px`);
         const image = document.createElement("img");
-        image.src = source;
+        image.src = stripInfo.source;
         image.alt = "";
-        half.appendChild(image);
-        opening.appendChild(half);
+        strip.appendChild(image);
+        opening.appendChild(strip);
       }
 
       riftLayer.firstElementChild.appendChild(opening);
