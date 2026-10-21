@@ -237,7 +237,7 @@
   <audio id="joke-audio" src="joke.mp3" preload="auto"></audio>
   <audio id="jarona-spawn-audio" src="meowl-Jarona.mp3" preload="auto"></audio>
   <div id="jarona-layer" aria-hidden="true"></div>
-  <audio id="rift-audio" src="EVERY END.ogg" preload="auto" loop></audio>
+  <audio id="rift-audio" src="cracking.mp3" preload="auto"></audio>
   <div id="rift-layer" aria-hidden="true"></div>
   <img id="jarona-flowery" src="flowery.png" alt="" hidden>
   <canvas id="floating-meowls" aria-hidden="true"></canvas>
@@ -565,6 +565,9 @@
       }, 192000);
     }
     function addRiftCrack(branchFrom = null) {
+      riftAudio.pause();
+      riftAudio.currentTime = 0;
+      riftAudio.play().catch(() => {});
       const width = window.innerWidth;
       const height = window.innerHeight;
       const branchPoint = branchFrom ? branchFrom[Math.floor(branchFrom.length * 0.55)] : null;
@@ -599,8 +602,6 @@
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
-      riftAudio.currentTime = 0;
-      riftAudio.play().catch(() => {});
       banner.innerText = "Breaking Open";
       const firstCrack = addRiftCrack();
       setTimeout(() => addRiftCrack(firstCrack), 20000);
