@@ -195,13 +195,15 @@
       object-fit: cover;
     }
 
+    .rift-opening-pair { position:absolute; inset:0; overflow:hidden; }
     .rift-half {
       position: absolute;
       left: 0;
       right: 0;
-      animation-duration: 3200ms;
-      animation-timing-function: steps(1, end);
-      animation-iteration-count: infinite;
+      opacity: 1;
+      animation-duration: 8000ms;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
     }
 
     .rift-half img {
@@ -213,28 +215,17 @@
       object-fit: fill;
     }
 
-    .rift-half-top { top: 0; height: 50%; animation-name: rift-top-tear; }
-    .rift-half-bottom { bottom: 0; height: 50%; animation-name: rift-bottom-tear; }
-    @keyframes rift-top-tear {
-      0%, 12%, 100% { transform: translate(0, 0); filter: none; }
-      13% { transform: translate(var(--tear-shift), -1px); filter: brightness(1.2); }
-      15% { transform: translate(calc(var(--tear-shift) * -.35), -2px); }
-      18%, 48% { transform: translate(0, 0); }
-      49% { transform: translate(calc(var(--tear-shift) * -1), -3px); filter: brightness(1.12); }
-      51% { transform: translate(0, 0); }
-      76% { transform: translate(var(--tear-shift), -4px); }
-      78%, 99% { transform: translate(0, 0); }
+    .rift-half-top { top: 0; height: 50%; animation-name: rift-open-top; }
+    .rift-half-bottom { bottom: 0; height: 50%; animation-name: rift-open-bottom; }
+
+    @keyframes rift-open-top {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-110vh); opacity: 0; }
     }
 
-    @keyframes rift-bottom-tear {
-      0%, 12%, 100% { transform: translate(0, 0); filter: none; }
-      13% { transform: translate(calc(var(--tear-shift) * -.6), 2px); filter: brightness(1.16); }
-      15% { transform: translate(var(--tear-shift), 3px); }
-      18%, 48% { transform: translate(0, 0); }
-      49% { transform: translate(var(--tear-shift), 5px); filter: brightness(1.1); }
-      51% { transform: translate(0, 0); }
-      76% { transform: translate(calc(var(--tear-shift) * -.8), 7px); }
-      78%, 99% { transform: translate(0, 0); }
+    @keyframes rift-open-bottom {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(110vh); opacity: 0; }
     }
     @keyframes rift-scene-fade {
       0%, 55% { opacity: 1; }
@@ -340,6 +331,7 @@
     let adminAudioWasPlaying = false;
     let discoActive = false;
     let riftActive = false;
+    let riftSpawnTimer;
     let riftEndTimer;
     let jaronaCountdownActive = false;
     let jaronaActive = false;
@@ -600,31 +592,36 @@
         showRandomMessage();
       }, 192000);
     }
-    function buildRiftScene() {
-      const scene = document.createElement("div");
-      scene.className = "rift-scene";
+    function addRiftOpening() {
+      const opening = document.createElement("div");
+      opening.className = "rift-opening-pair";
 
       for (const [part, source] of [["top", "Meowl-top.png"], ["bottom", "Meowl-bottom.png"]]) {
         const half = document.createElement("div");
         half.className = `rift-half rift-half-${part}`;
-        half.style.setProperty("--tear-shift", `${(Math.random() < 0.5 ? -1 : 1) * (12 + Math.random() * 90)}px`);
-        half.style.animationDelay = `${Math.random() * 1.2}s`;
         const image = document.createElement("img");
         image.src = source;
         image.alt = "";
         half.appendChild(image);
-        scene.appendChild(half);
+        opening.appendChild(half);
       }
-      return scene;
+
+      riftLayer.firstElementChild.appendChild(opening);
+      setTimeout(() => opening.remove(), 8100);
     }
     function startRiftEvent() {
       if (!canStartEvent()) return;
       riftActive = true;
-      riftLayer.appendChild(buildRiftScene());
+      const scene = document.createElement("div");
+      scene.className = "rift-scene";
+      riftLayer.appendChild(scene);
+      addRiftOpening();
+      riftSpawnTimer = setInterval(addRiftOpening, 900);
       riftAudio.currentTime = 0;
       riftAudio.play().catch(() => {});
       banner.innerText = "the background is cracking open";
       riftEndTimer = setTimeout(() => {
+        clearInterval(riftSpawnTimer);
         riftActive = false;
         riftAudio.pause();
         riftAudio.currentTime = 0;
