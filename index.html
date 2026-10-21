@@ -204,7 +204,7 @@
       width: var(--strip-width);
       height: var(--strip-height);
       overflow: hidden;
-      animation: rift-strip-open 8000ms ease-in-out infinite;
+      animation: rift-strip-open 5000ms ease-in-out infinite;
     }
 
     .rift-strip img {
@@ -215,9 +215,8 @@
     }
 
     @keyframes rift-strip-open {
-      0%, 8% { transform: translate(0, 0); opacity: 1; }
-      82% { transform: translate(var(--tear-shift), var(--open-shift)); opacity: .85; }
-      100% { transform: translate(var(--tear-shift), var(--open-shift)); opacity: .35; }
+      0% { transform: translate(0, 0); }
+      20%, 100% { transform: translate(var(--tear-shift), var(--open-shift)); }
     }
     @keyframes rift-scene-fade {
       0%, 55% { opacity: 1; }
@@ -594,7 +593,7 @@
         { source: "Meowl-bottom.png", top: 73, height: 27, left: 2, width: 98, open: 8 }
       ];
 
-      for (const stripInfo of strips) {
+      strips.forEach((stripInfo, index) => {
         const strip = document.createElement("div");
         strip.className = "rift-strip";
         strip.style.setProperty("--strip-top", `${stripInfo.top}%`);
@@ -603,12 +602,13 @@
         strip.style.setProperty("--strip-width", `${stripInfo.width}%`);
         strip.style.setProperty("--open-shift", `${stripInfo.open}vh`);
         strip.style.setProperty("--tear-shift", `${(Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 32)}px`);
+        strip.style.animationDelay = `${index}s`;
         const image = document.createElement("img");
         image.src = stripInfo.source;
         image.alt = "";
         strip.appendChild(image);
         opening.appendChild(strip);
-      }
+      });
 
       riftLayer.firstElementChild.appendChild(opening);
     }
