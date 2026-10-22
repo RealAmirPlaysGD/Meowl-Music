@@ -398,6 +398,7 @@
     let discoCountdownActive = false;
     let adminEventActive = false;
     let adminAudioWasPlaying = false;
+    let eventMusicWasPlaying = false;
     let discoActive = false;
     let crackingOpenActive = false;
     let crackingStage = 0;
@@ -488,7 +489,6 @@
         pageClickCount = 0;
         clearTimeout(pageClickResetTimer);
         startRiftEvent();
-        if (audio.paused) audio.play();
       }
     });
 
@@ -500,7 +500,6 @@
       }
       if (canStartEvent() && Math.random() < 0.03) {
         startRiftEvent();
-        if (audio.paused) audio.play();
         return;
       }
 
@@ -523,12 +522,24 @@
       }, 300);
     }
 
+    function pauseMainMusicForEvent() {
+      eventMusicWasPlaying = !audio.paused;
+      audio.pause();
+    }
+
+    function resumeMainMusicAfterEvent() {
+      const shouldResume = eventMusicWasPlaying;
+      eventMusicWasPlaying = false;
+      if (shouldResume) audio.play().catch(() => {});
+    }
+
     function canStartEvent() {
       return !editMode && !countdownActive && !discoCountdownActive && !jaronaCountdownActive && !adminEventActive && !discoActive && !jaronaActive && !crackingOpenActive;
     }
 
     function startDiscoEvent() {
       if (!canStartEvent()) return;
+      pauseMainMusicForEvent();
       discoActive = true;
       discoAudio.currentTime = 0;
       discoAudio.play();
@@ -558,6 +569,7 @@
         floatingMeowlMotion = [];
         activeCollisionPairs.clear();
         floatingContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        resumeMainMusicAfterEvent();
         showRandomMessage();
       }, 60000);
     }
@@ -688,6 +700,7 @@
 
     function startJaronaEvent() {
       if (!canStartEvent()) return;
+      pauseMainMusicForEvent();
       jaronaActive = true;
       banner.innerText = "Jarona!";
       jaronaFlowery.hidden = false;
@@ -705,6 +718,7 @@
         jaronaActive = false;
         jaronaFlowery.hidden = true;
         document.body.classList.remove("jarona-active");
+        resumeMainMusicAfterEvent();
         showRandomMessage();
       }, 192000);
     }
@@ -741,6 +755,7 @@
       crackPieces = [];
       crackingStage = 0;
       crackingOpenActive = false;
+      resumeMainMusicAfterEvent();
     }
 
     function restartCrackingIdleTimer() {
@@ -749,6 +764,7 @@
     }
 
     function startCrackingOpen() {
+      pauseMainMusicForEvent();
       crackingOpenActive = true;
       crackingOriginalMessage = banner.innerText;
       crackingStage = 1;
@@ -860,6 +876,7 @@
       crackPieces = [];
       crackingStage = 0;
       crackingOpenActive = false;
+      resumeMainMusicAfterEvent();
     }
 
     function startCrackShatter() {
