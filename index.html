@@ -463,6 +463,13 @@
     });
 
     document.addEventListener("click", (event) => {
+      if (crackingOpenActive) {
+        if (crackingStage < 3 && !event.target.closest("button, #status-banner, #admin-panel")) {
+          advanceCrackingOpen();
+        }
+        return;
+      }
+
       if (editMode || !canStartEvent()) {
         pageClickCount = 0;
         clearTimeout(pageClickResetTimer);
