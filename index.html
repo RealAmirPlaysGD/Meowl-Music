@@ -322,6 +322,7 @@
   <audio id="jarona-spawn-audio" src="meowl-Jarona.mp3" preload="auto"></audio>
   <div id="jarona-layer" aria-hidden="true"></div>
   <audio id="rift-audio" src="cracking.mp3" preload="auto"></audio>
+  <audio id="shatter-audio" src="screen shatter.mp3" preload="auto"></audio>
   <audio id="rift-music" src="EVERY END.ogg" preload="auto" loop></audio>
   <svg id="crack-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" hidden>
     <path id="crack-line-one-shadow" class="crack-shadow" pathLength="1" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
@@ -362,6 +363,7 @@
     const crackContext = crackShards.getContext("2d");
     const rebuildWorkers = document.getElementById("rebuild-workers");
     const crackAudio = document.getElementById("rift-audio");
+    const shatterAudio = document.getElementById("shatter-audio");
     const riftMusic = document.getElementById("rift-music");
     const jaronaFlowery = document.getElementById("jarona-flowery");
     const banner = document.getElementById("status-banner");
@@ -405,6 +407,7 @@
     let crackingIdleTimer;
     let crackTextTimer;
     let crackShatterFrame;
+    let crackShatterStartTimer;
     let lastCrackFrame = 0;
     let crackPieces = [];
     let crackRebuilding = false;
@@ -721,6 +724,7 @@
       if (!crackingOpenActive || crackingStage >= 3) return;
       clearTimeout(crackingIdleTimer);
       clearTimeout(crackTextTimer);
+      clearTimeout(crackShatterStartTimer);
       clearTimeout(crackRebuildStartTimer);
       clearTimeout(crackRebuildTimer);
       cancelAnimationFrame(crackShatterFrame);
@@ -775,15 +779,31 @@
       } else {
         banner.innerText = "WHAT HAVE YOU DONE";
         crackLines.hidden = true;
-        document.body.classList.add("cracking-open");
-        image.style.visibility = "hidden";
-        startCrackShatter();
-        playCrackSound();
+        shatterAudio.pause();
+        shatterAudio.currentTime = 0;
+        let shatterDelayStarted = false;
+        const startShatterDelay = () => {
+          if (shatterDelayStarted) return;
+          shatterDelayStarted = true;
+          crackShatterStartTimer = setTimeout(() => {
+            if (!crackingOpenActive || crackingStage !== 3) return;
+            document.body.classList.add("cracking-open");
+            image.style.visibility = "hidden";
+            startCrackShatter();
+            crackRebuildStartTimer = setTimeout(startCrackRebuild, 20000);
+          }, 2000);
+        };
+        shatterAudio.addEventListener("playing", startShatterDelay, { once: true });
+        const shatterPlayback = shatterAudio.play();
+        if (shatterPlayback && typeof shatterPlayback.then === "function") {
+          shatterPlayback.then(startShatterDelay).catch(startShatterDelay);
+        } else {
+          startShatterDelay();
+        }
         clearTimeout(crackingIdleTimer);
         crackTextTimer = setTimeout(() => {
           if (crackingOpenActive && crackingStage === 3) banner.innerText = "..";
         }, 1000);
-        crackRebuildStartTimer = setTimeout(startCrackRebuild, 20000);
         return;
       }
       restartCrackingIdleTimer();
