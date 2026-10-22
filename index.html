@@ -323,7 +323,6 @@
   <div id="jarona-layer" aria-hidden="true"></div>
   <audio id="rift-audio" src="cracking.mp3" preload="auto"></audio>
   <audio id="shatter-audio" src="screen shatter.mp3" preload="auto"></audio>
-  <audio id="rift-music" src="EVERY END.ogg" preload="auto" loop></audio>
   <svg id="crack-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" hidden>
     <path id="crack-line-one-shadow" class="crack-shadow" pathLength="1" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
     <path id="crack-line-one-highlight" class="crack-highlight" pathLength="1" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
@@ -364,7 +363,6 @@
     const rebuildWorkers = document.getElementById("rebuild-workers");
     const crackAudio = document.getElementById("rift-audio");
     const shatterAudio = document.getElementById("shatter-audio");
-    const riftMusic = document.getElementById("rift-music");
     const jaronaFlowery = document.getElementById("jarona-flowery");
     const banner = document.getElementById("status-banner");
     const editExitButton = document.getElementById("edit-exit-mode");
@@ -743,8 +741,6 @@
       crackPieces = [];
       crackingStage = 0;
       crackingOpenActive = false;
-      riftMusic.pause();
-      riftMusic.currentTime = 0;
     }
 
     function restartCrackingIdleTimer() {
@@ -754,8 +750,6 @@
 
     function startCrackingOpen() {
       crackingOpenActive = true;
-      riftMusic.currentTime = 0;
-      riftMusic.play().catch(() => {});
       crackingOriginalMessage = banner.innerText;
       crackingStage = 1;
       clearTimeout(imageResetTimeout);
@@ -866,8 +860,6 @@
       crackPieces = [];
       crackingStage = 0;
       crackingOpenActive = false;
-      riftMusic.pause();
-      riftMusic.currentTime = 0;
     }
 
     function startCrackShatter() {
