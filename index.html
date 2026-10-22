@@ -204,7 +204,7 @@
 
     #crack-lines .crack-highlight {
       stroke: #fff;
-      stroke-width: 6;
+      stroke-width: 9;
       filter: drop-shadow(0 0 5px #fff);
     }
 
@@ -325,10 +325,10 @@
   <audio id="rift-audio" src="cracking.mp3" preload="auto"></audio>
   <audio id="shatter-audio" src="screen shatter.mp3" preload="auto"></audio>
   <svg id="crack-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" hidden>
-    <path id="crack-line-one-shadow" class="crack-shadow" pathLength="1" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
-    <path id="crack-line-one-highlight" class="crack-highlight" pathLength="1" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
-    <path id="crack-line-two-shadow" class="crack-shadow" pathLength="1" d="M 508 0 L 479 83 L 525 156 L 462 230 L 505 307 L 448 379 L 486 450 L 424 524 L 468 598 L 407 675 L 451 748 L 392 821 L 432 900 L 382 1000"></path>
-    <path id="crack-line-two-highlight" class="crack-highlight" pathLength="1" d="M 508 0 L 479 83 L 525 156 L 462 230 L 505 307 L 448 379 L 486 450 L 424 524 L 468 598 L 407 675 L 451 748 L 392 821 L 432 900 L 382 1000"></path>
+    <path id="crack-line-one-shadow" class="crack-shadow" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
+    <path id="crack-line-one-highlight" class="crack-highlight" d="M 1000 468 L 928 501 L 854 452 L 779 482 L 708 433 L 629 478 L 554 444 L 481 503 L 402 459 L 326 512 L 249 469 L 175 526 L 102 482 L 0 534"></path>
+    <path id="crack-line-two-shadow" class="crack-shadow" d="M 508 0 L 479 83 L 525 156 L 462 230 L 505 307 L 448 379 L 486 450 L 424 524 L 468 598 L 407 675 L 451 748 L 392 821 L 432 900 L 382 1000"></path>
+    <path id="crack-line-two-highlight" class="crack-highlight" d="M 508 0 L 479 83 L 525 156 L 462 230 L 505 307 L 448 379 L 486 450 L 424 524 L 468 598 L 407 675 L 451 748 L 392 821 L 432 900 L 382 1000"></path>
   </svg>
   <canvas id="crack-shards" aria-hidden="true" hidden></canvas>
   <div id="rebuild-workers" aria-hidden="true" hidden></div>
@@ -765,6 +765,16 @@
       crackingIdleTimer = setTimeout(resetCrackingOpen, 10000);
     }
 
+    function prepareCrackPaths(ids) {
+      ids.forEach((id) => {
+        const path = document.getElementById(id);
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+      });
+      crackLines.getBoundingClientRect();
+    }
+
     function startCrackingOpen() {
       pauseMainMusicForEvent();
       crackingOpenActive = true;
@@ -777,6 +787,7 @@
       crackLines.hidden = false;
       crackLines.classList.remove("first-crack");
       crackLines.classList.remove("second-crack");
+      prepareCrackPaths(["crack-line-one-shadow", "crack-line-one-highlight"]);
       crackLines.classList.add("first-crack");
       trackMeowlEvent("cracking_open");
       playCrackSound();
@@ -789,6 +800,7 @@
       crackingStage += 1;
       if (crackingStage === 2) {
         banner.innerText = "okay stop you are litereally somehow breaking the fourth wall";
+        prepareCrackPaths(["crack-line-two-shadow", "crack-line-two-highlight"]);
         crackLines.classList.add("second-crack");
         playCrackSound();
       } else {
