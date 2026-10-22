@@ -431,6 +431,8 @@
     let lastAnimationFrame = 0;
     let editMode = false;
     let bannerClickCount = 0;
+    let pageClickCount = 0;
+    let pageClickResetTimer;
 
     function resizeFloatingCanvas() {
       const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -465,6 +467,28 @@
       if (!jaronaActive) return;
       jaronaFlowery.style.left = window.innerWidth / 2 + "px";
       jaronaFlowery.style.top = "76px";
+    });
+
+    document.addEventListener("click", (event) => {
+      if (editMode || !canStartEvent()) {
+        pageClickCount = 0;
+        clearTimeout(pageClickResetTimer);
+        return;
+      }
+      if (event.target.closest("button, #status-banner, #admin-panel")) return;
+
+      pageClickCount += 1;
+      clearTimeout(pageClickResetTimer);
+      pageClickResetTimer = setTimeout(() => {
+        pageClickCount = 0;
+      }, 2500);
+
+      if (pageClickCount >= 8) {
+        pageClickCount = 0;
+        clearTimeout(pageClickResetTimer);
+        startRiftEvent();
+        if (audio.paused) audio.play();
+      }
     });
 
     image.addEventListener("click", () => {
