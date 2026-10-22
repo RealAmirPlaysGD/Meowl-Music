@@ -27,7 +27,7 @@
       position: fixed;
       top: 0;
       left: 0;
-      z-index: 5;
+      z-index: 12;
       box-sizing: border-box;
       width: 100%;
       font-size: 24px;
@@ -177,7 +177,7 @@
     #crack-shards {
       position: fixed;
       inset: 0;
-      z-index: 2;
+      z-index: 8;
       width: 100%;
       height: 100%;
       pointer-events: none;
@@ -238,6 +238,7 @@
 
     .rebuild-worker {
       position: absolute;
+      z-index: 9;
       bottom: 8px;
       width: 52px;
       height: 58px;
@@ -402,6 +403,7 @@
     let discoActive = false;
     let crackingOpenActive = false;
     let crackingStage = 0;
+    let crackingStageStartedAt = 0;
     let crackingOriginalMessage = "";
     let crackingIdleTimer;
     let crackTextTimer;
@@ -768,6 +770,7 @@
       crackingOpenActive = true;
       crackingOriginalMessage = banner.innerText;
       crackingStage = 1;
+      crackingStageStartedAt = performance.now();
       clearTimeout(imageResetTimeout);
       image.src = "meowl.png";
       banner.innerText = "uhmm what";
@@ -781,6 +784,8 @@
     }
 
     function advanceCrackingOpen() {
+      if (performance.now() - crackingStageStartedAt < 1200) return;
+      crackingStageStartedAt = performance.now();
       crackingStage += 1;
       if (crackingStage === 2) {
         banner.innerText = "okay stop you are litereally somehow breaking the fourth wall";
